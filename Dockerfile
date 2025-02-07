@@ -10,6 +10,13 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
 
-EXPOSE 8000
+EXPOSE ${PORT:-8000}
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "main:app", "--worker-class", "uvicorn.workers.UvicornWorker", "--workers", "2"]
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:${PORT:-8000}", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--workers", "2", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "50", \
+     "--log-file", "-", \
+     "main:app"]
