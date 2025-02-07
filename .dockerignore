@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.env
+.git
+.gitignore
+.github
+.vscode
+.venv
+.venv/lib
+.venv/lib/python3.9/site-packages/torch/lib/

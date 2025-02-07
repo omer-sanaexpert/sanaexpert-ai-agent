@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SanaExpert Chatbot</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 400px;
+            height: 600px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background-color: #0d8500;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            font-size: 15px;
+            
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 12px;
+            max-width: 70%;
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .message.user {
+            background-color: #0d8500;
+            color: #fff;
+            align-self: flex-end;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .message.bot {
+            background-color: #fff;
+            color: #333;
+            align-self: flex-start;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ddd;
+            background-color: #fff;
+            padding: 10px;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        .chat-input input:focus {
+            border-color: #0d8500;
+        }
+        .chat-input input::placeholder {
+            color: #999;
+        }
+        .chat-input button {
+            padding: 10px 20px;
+            background-color: #0d8500;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .chat-input button:hover {
+            background-color: #086400;
+        }
+
+        /* Link Preview */
+        .link-preview {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 10px;
+            background: #fff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            word-wrap: break-word; /* Breaks long words */
+            overflow-wrap: break-word; /* Ensures text wraps */
+            
+        }
+        .link-preview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .link-preview img {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        .link-preview .title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+            max-width: 50%;
+        }
+        .link-preview .description {
+            font-size: 12px;
+            color: #666;
+            max-width: 50%;
+            
+        }
+        .source {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+            text-align: right;
+        }
+
+        /* Popup */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            z-index: 1000;
+        }
+        .popup iframe {
+            width: 100%;
+            height: 300px;
+            border: none;
+            border-radius: 8px;
+        }
+        .popup-close {
+            display: block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #0d8500;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .popup-close:hover {
+            background: #086400;
+        }
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="chat-container">
+        <div class="chat-header">
+            <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Logo" style="height: 30px; vertical-align: middle;">
+            AI Agent
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <!-- Popup Modal for Links -->
+    <div class="popup-overlay"></div>
+    <div class="popup">
+        <iframe id="popup-iframe"></iframe>
+        <button class="popup-close">Close</button>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            let userId = localStorage.getItem('user_id') || `user_${Math.floor(Math.random() * 100000)}`;
+            localStorage.setItem('user_id', userId);
+    
+            function appendMessage(sender, message, source) {
+                message = convertLinksToPreviews(message);
+                let sourceElement = source ? `<div class="source">Generated by AI</div>` : '';
+                let messageElement = `<div class="message ${sender}">${message}${sourceElement}</div>`;
+                $('#chat-messages').append(messageElement);
+                $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
+            }
+    
+            function convertLinksToPreviews(text) {
+                let urlRegex = /(https?:\/\/[^\s]+)/g;
+                return text.replace(urlRegex, function (url) {
+                    return `<a href="${url}" target="_blank" class="link-preview">
+                                <img src="https://www.google.com/s2/favicons?sz=64&domain=${url}" alt="Link">
+                                <div>
+                                    <div class="title">${url}</div>
+                                    <div class="description">Click to open</div>
+                                </div>
+                            </a>`;
+                });
+            }
+    
+            function sendMessage() {
+                let message = $('#user-input').val().trim();
+                if (message === '') return;
+    
+                appendMessage('user', message);
+                $('#user-input').val('');
+    
+                $.ajax({
+                    url: '/chat',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ user_id: userId, message: message }),
+                    success: function (data) {
+                        if (data.response) {
+                            appendMessage('bot', data.response, data.source);
+                        }
+                    },
+                    error: function () {
+                        appendMessage('bot', 'Sorry, something went wrong. Please try again.');
+                    }
+                });
+            }
+    
+            $('#send-button').click(sendMessage);
+    
+            $('#user-input').keypress(function (e) {
+                if (e.which === 13) sendMessage();
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function () {
+            $("#chat-toggle").click(function () {
+                $("#chat-popup").toggle();
+            });
+            
+            $("#close-chat").click(function () {
+                $("#chat-popup").hide();
+            });
+        });
+    </script>
+</body>
+</html>
