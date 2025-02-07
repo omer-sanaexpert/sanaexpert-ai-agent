@@ -31,6 +31,21 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List
 
+from fastapi.responses import JSONResponse
+
+
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import Depends
+
+# Security setup
+security = HTTPBasic()
+AUTH_USERNAME = os.getenv("API_USERNAME", "sanaexpert")  # Set these in your .env file
+AUTH_PASSWORD = os.getenv("API_PASSWORD", "San@Xpert997755")
+
+def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
+    if credentials.username != AUTH_USERNAME or credentials.password != AUTH_PASSWORD:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return credentials
 
 
 # Load environment variables
@@ -71,6 +86,27 @@ huggingface_token = os.getenv("HUGGINGFACE_API_TOKEN")
 embedding_model = SentenceTransformer("intfloat/multilingual-e5-small")
 
 
+
+LOG_FILE = "chat_logs.json"
+
+def save_log(user_id, user_message, assistant_response):
+    log_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "user_id": user_id,
+        "user_message": user_message,
+        "assistant_response": assistant_response
+    }
+
+    try:
+        with open(LOG_FILE, "r") as f:
+            logs = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        logs = []
+
+    logs.append(log_entry)
+
+    with open(LOG_FILE, "w") as f:
+        json.dump(logs, f, indent=4)
 
 
 # generate and store the embeddings for the knowledgebase
@@ -363,7 +399,7 @@ class ChatRequest(BaseModel):
     message: str = Field(..., description="User message")
 
 @app.post("/chat")
-async def chat(request_data: ChatRequest):
+async def chat(request_data: ChatRequest, credentials: HTTPBasicCredentials = Depends(authenticate)):
     user_id = request_data.user_id
     user_message = request_data.message
 
@@ -411,6 +447,5 @@ async def chat(request_data: ChatRequest):
 
 
 @app.get("/")
-def index():
-    # Serve the index.html file from the current directory
+def index(credentials: HTTPBasicCredentials = Depends(authenticate)):
     return FileResponse("index.html", media_type="text/html")
