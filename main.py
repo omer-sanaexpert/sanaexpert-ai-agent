@@ -37,6 +37,22 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi import Depends
 
+from datetime import datetime, timedelta
+
+# Cache dictionary to store API responses
+api_cache = {
+    "get_order_information": {},
+    "get_voucher_information": {"data": None, "timestamp": None},
+    "get_product_information": {"data": None, "timestamp": None}
+}
+
+CACHE_EXPIRY_HOURS = 24  # Set cache expiration time to 24 hours
+
+def is_cache_valid(timestamp):
+    """Check if the cached data is still valid."""
+    return timestamp and datetime.now() - timestamp < timedelta(hours=CACHE_EXPIRY_HOURS)
+
+
 # Security setup
 security = HTTPBasic()
 AUTH_USERNAME = os.getenv("API_USERNAME", "sanaexpert")  # Set these in your .env file
@@ -126,25 +142,24 @@ def get_order_information(order_id: str) -> Dict[str, Any]:
         Dict[str, Any]: A dictionary containing order details, including shipping information.
     """
     print("get_order_information")
+
+    # Check if the order data is cached and still valid
+    if order_id in api_cache["get_order_information"]:
+        cached_entry = api_cache["get_order_information"][order_id]
+        if is_cache_valid(cached_entry["timestamp"]):
+            print("Returning cached order info")
+            return cached_entry["data"]
+
+    # If not cached or expired, call API
     payload = {
         "action": "getOrderInformation",
         "order_id": order_id
     }
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(url, headers=headers, auth=HTTPBasicAuth(username, password), data=json.dumps(payload))
 
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    response = requests.post(
-        url,
-        headers=headers,
-        auth=HTTPBasicAuth(username, password),
-        data=json.dumps(payload)
-    )
-
-    print(response.status_code)
-    print(response.json())
-
+    # Store response in cache
+    api_cache["get_order_information"][order_id] = {"data": response.json(), "timestamp": datetime.now()}
     return response.json()
 
 @tool
@@ -155,24 +170,18 @@ def get_voucher_information() -> Dict[str, Any]:
         Dict[str, Any]: A dictionary containing voucher information.
     """
     print("get_voucher_information")
-    payload = {
-        "action": "getCurrentShopifyVoucherCodes",
-    }
 
-    headers = {
-        "Content-Type": "application/json"
-    }
+    if is_cache_valid(api_cache["get_voucher_information"]["timestamp"]):
+        print("Returning cached voucher info")
+        return api_cache["get_voucher_information"]["data"]
 
-    response = requests.post(
-        url,
-        headers=headers,
-        auth=HTTPBasicAuth(username, password),
-        data=json.dumps(payload)
-    )
+    # Fetch from API if cache is expired
+    payload = {"action": "getCurrentShopifyVoucherCodes"}
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(url, headers=headers, auth=HTTPBasicAuth(username, password), data=json.dumps(payload))
 
-    print(response.status_code)
-    print(response.json())
-
+    # Store response in cache
+    api_cache["get_voucher_information"] = {"data": response.json(), "timestamp": datetime.now()}
     return response.json()
 
 @tool
@@ -183,24 +192,18 @@ def get_product_information() -> Dict[str, Any]:
         Dict[str, Any]: A dictionary containing product pricing , name and url information.
     """
     print("get_product_pricing")
-    payload = {
-        "action": "getCurrentShopifyPrices",
-    }
 
-    headers = {
-        "Content-Type": "application/json"
-    }
+    if is_cache_valid(api_cache["get_product_information"]["timestamp"]):
+        print("Returning cached product info")
+        return api_cache["get_product_information"]["data"]
 
-    response = requests.post(
-        url,
-        headers=headers,
-        auth=HTTPBasicAuth(username, password),
-        data=json.dumps(payload)
-    )
+    # Fetch from API if cache is expired
+    payload = {"action": "getCurrentShopifyPrices"}
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(url, headers=headers, auth=HTTPBasicAuth(username, password), data=json.dumps(payload))
 
-    print(response.status_code)
-    print(response.json())
-
+    # Store response in cache
+    api_cache["get_product_information"] = {"data": response.json(), "timestamp": datetime.now()}
     return response.json()
 
 # @tool

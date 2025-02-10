@@ -14,11 +14,23 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            flex-direction: column;
         }
         .chat-container {
             width: 400px;
             height: 600px;
             background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            width: 380px;
+            
+            margin: 20px;
+            background-color: #0d8500;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             display: flex;
@@ -187,6 +199,11 @@
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
+        .p{
+            padding: 0;
+            margin: 0;
+            color:#ffffff
+        }
 
         /* Animations */
         @keyframes fadeIn {
@@ -196,7 +213,15 @@
     </style>
 </head>
 <body>
-    
+    <div class="header" style=" padding: 10px;">
+        
+        <p class="p">For order/shippment testing:</p>
+        <p class="p">order_id: 521240,postal_code: 45223</p>
+        
+        
+       
+
+    </div>
     <div class="chat-container">
         <div class="chat-header">
             <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Logo" style="height: 30px; vertical-align: middle;">
@@ -207,7 +232,10 @@
             <input type="text" id="user-input" placeholder="Type your message...">
             <button id="send-button">Send</button>
         </div>
+
+       
     </div>
+    
 
     <!-- Popup Modal for Links -->
     <div class="popup-overlay"></div>
