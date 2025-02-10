@@ -39,6 +39,11 @@ from fastapi import Depends
 
 from datetime import datetime, timedelta
 
+from anthropic import Anthropic, Client
+from dotenv import load_dotenv
+load_dotenv() 
+
+
 # Cache dictionary to store API responses
 api_cache = {
     "get_order_information": {},
@@ -57,11 +62,27 @@ def is_cache_valid(timestamp):
 security = HTTPBasic()
 AUTH_USERNAME = os.getenv("API_USERNAME", "sanaexpert")  # Set these in your .env file
 AUTH_PASSWORD = os.getenv("API_PASSWORD", "San@Xpert997755")
-
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
     if credentials.username != AUTH_USERNAME or credentials.password != AUTH_PASSWORD:
         raise HTTPException(status_code=401, detail="Unauthorized")
     return credentials
+print(os.environ.get("ANTHROPIC_API_KEY"))
+client = Anthropic(
+    api_key=os.environ.get("ANTHROPIC_API_KEY"),  # This is the default and can be omitted
+)
+
+
+def count_tokens(text: str) -> int:
+    """Count the number of tokens in a given text."""
+    # Count tokens before creating a message
+    print(text)
+    count = client.beta.messages.count_tokens(
+        model="claude-3-5-sonnet-20241022",
+        messages=[{"role": "user", "content": text}],
+    )
+    return count
+
 
 
 # Load environment variables
@@ -477,7 +498,7 @@ async def chat(request_data: ChatRequest, credentials: HTTPBasicCredentials = De
     }
 
     user_conversations[user_id]["history"].append(f"\U0001F9D1\u200D\U0001F4BB You: {user_message}")
-
+    input_tokens = count_tokens(user_message)
     try:
         events = part_1_graph.stream(
             {"messages": [("user", user_message)]}, config, stream_mode="values"
@@ -498,6 +519,11 @@ async def chat(request_data: ChatRequest, credentials: HTTPBasicCredentials = De
                         content = " ".join(str(part) for part in content)
                     elif isinstance(content, str):
                         last_assistant_response = content
+    
+    output_tokens = count_tokens(last_assistant_response)
+
+    print("Input tokens: ", input_tokens)
+    print("Output tokens: ", output_tokens)
 
     return {"response": last_assistant_response}
 

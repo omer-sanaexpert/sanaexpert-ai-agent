@@ -1,5 +1,4 @@
 langchain_community
-tiktoken
 langchain-groq
 langchainhub
 chromadb
@@ -8,7 +7,6 @@ langgraph
 langchain-anthropic
 tavily-python
 pandas
-openai
 pinecone-client
 langchain_core
 fastapi
@@ -17,3 +15,5 @@ sentence-transformers
 bs4
 pydantic
 gunicorn
+anthropic
+python-dotenv
