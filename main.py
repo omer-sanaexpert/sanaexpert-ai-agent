@@ -69,6 +69,8 @@ load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+print("welcome")
 
 # In-memory storage for user conversations
 user_conversations = {}
@@ -142,6 +144,7 @@ def get_order_information(order_id: str) -> Dict[str, Any]:
         Dict[str, Any]: A dictionary containing order details, including shipping information.
     """
     print("get_order_information")
+    print("order id : ",order_id)
 
     # Check if the order data is cached and still valid
     if order_id in api_cache["get_order_information"]:
