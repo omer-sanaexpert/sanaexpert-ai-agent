@@ -18,5 +18,4 @@ CMD ["gunicorn", \
      "--workers", "2", \
      "--max-requests", "1000", \
      "--max-requests-jitter", "50", \
-     "--log-file", "-", \
      "main:app"]

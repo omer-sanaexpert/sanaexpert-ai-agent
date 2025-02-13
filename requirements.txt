@@ -19,3 +19,4 @@ anthropic
 python-dotenv
 user-agents
 geoip2
+itsdangerous
