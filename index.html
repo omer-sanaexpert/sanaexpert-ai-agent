@@ -3,6 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta property="og:title" content="SanaExpert | Complementos alimenticios naturales">
+    <meta property="og:type" content="website">
+    <meta property="og:description" content="Somos una empresa alemana que ofrece soluciones a molestias corporales de una forma natural, justa y ecológica. Estamos especializados en el desarrollo, fabricación y distribución de suplementos nutricionales y alimentos dietéticos en Europa.">
+    <meta property="og:image" content="http://sanaexpert.es/cdn/shop/files/logosanae_1200x1200.jpg?v=1614290765">
+    <meta property="og:image:secure_url" content="https://sanaexpert.es/cdn/shop/files/logosanae_1200x1200.jpg?v=1614290765">
+
+    <link rel="shortcut icon" href="//sanaexpert.es/cdn/shop/files/sfavicon.png?v=1614295263" type="image/png"/>
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SanaExpert | Complementos alimenticios naturales">
+    <meta name="twitter:description" content="Somos una empresa alemana que ofrece soluciones a molestias corporales de una forma natural, justa y ecológica. Estamos especializados en el desarrollo, fabricación y distribución de suplementos nutricionales y alimentos dietéticos en Europa.">
     <title>SanaExpert AI Agent</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -233,6 +244,93 @@
             background-color: #0d8500;
         }
     </style>
+    
+    <style>
+        /* Previous styles remain the same */
+        
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            overflow-y: auto;
+            height: 450px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #ddd;
+            position: relative; /* Added for absolute positioning context */
+        }
+        
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+        
+        .message {
+            max-width: 70%;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 12px;
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            background-color: #0d8500;
+            color: #fff;
+        }
+        
+        .message.bot {
+            align-self: flex-start;
+            background-color: #fff;
+            color: #333;
+        }
+        
+        .loading-dots {
+            display: none;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: fit-content;
+            align-self: flex-start;
+        }
+        
+        .loading-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #0d8500;
+            margin: 0 3px;
+            opacity: 0;
+            animation: loadingDots 1.4s infinite;
+        }
+        
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes loadingDots {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -241,6 +339,7 @@
             <a class="navbar-brand" href="#">SanaExpert AI Agent</a>
         </div>
     </nav>
+    
     <!-- Main Content -->
     <div class="container-custom">
         <div class="row">
@@ -250,19 +349,20 @@
                         <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Logo" style="height: 30px; vertical-align: middle;">
                         AI Agent
                     </div>
-                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="messages-container">
+                            <!-- Messages will be appended here -->
+                        </div>
+                        <div class="loading-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
                     <div class="chat-input">
                         <input type="text" id="user-input" placeholder="Type your message...">
                         <button id="send-button">Send</button>
                     </div>
-                     <!-- Popup Modal for Links -->
-                    <div class="popup-overlay"></div>
-                    <div class="popup">
-                        <iframe id="popup-iframe"></iframe>
-                        <button class="popup-close">Close</button>
-                    </div>
-            
-                   
                 </div>
             </div>
             <div class="col-md-6">
@@ -298,60 +398,254 @@
    
 
     <script>
-        $(document).ready(function () {
-            let userId = localStorage.getItem('user_id') || `user_${Math.floor(Math.random() * 100000)}`;
-            localStorage.setItem('user_id', userId);
-    
-            function appendMessage(sender, message, source) {
-                message = convertLinksToPreviews(message);
-                let sourceElement = source ? `<div class="source">Generated by AI</div>` : '';
-                let messageElement = `<div class="message ${sender}">${message}${sourceElement}</div>`;
-                $('#chat-messages').append(messageElement);
-                $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
+      $(document).ready(function () {
+        let userId = localStorage.getItem('user_id') || `user_${Math.floor(Math.random() * 100000)}`;
+    localStorage.setItem('user_id', userId);
+
+    // Add custom styles
+    const messageStyles = `
+        <style>
+            .message.bot .formatted-content {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
             }
-    
-            function convertLinksToPreviews(text) {
-                let urlRegex = /(https?:\/\/[^\s]+)/g;
-                return text.replace(urlRegex, function (url) {
-                    return `<a href="${url}" target="_blank" class="link-preview">
-                                <img src="https://www.google.com/s2/favicons?sz=64&domain=${url}" alt="Link">
-                                <div>
-                                    <div class="title">${url}</div>
-                                    <div class="description">Click to open</div>
-                                </div>
-                            </a>`;
-                });
+            .message.bot .section {
+                margin: 10px 0;
+                padding: 8px 12px;
+                background: #f8f9fa;
+                border-radius: 8px;
             }
-    
-            function sendMessage() {
-                let message = $('#user-input').val().trim();
-                if (message === '') return;
-    
-                appendMessage('user', message);
-                $('#user-input').val('');
-    
-                $.ajax({
-                    url: '/chat',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ user_id: userId, message: message }),
-                    success: function (data) {
-                        if (data.response) {
-                            appendMessage('bot', data.response, data.source);
-                        }
-                    },
-                    error: function () {
-                        appendMessage('bot', 'Sorry, something went wrong. Please try again.');
-                    }
-                });
+            .message.bot .section-title {
+                color: #0d8500;
+                font-weight: bold;
+                margin-bottom: 5px;
             }
-    
-            $('#send-button').click(sendMessage);
-    
-            $('#user-input').keypress(function (e) {
-                if (e.which === 13) sendMessage();
-            });
+            .message.bot .bullet-list {
+                margin: 5px 0 5px 20px;
+                padding: 0;
+            }
+            .message.bot .bullet-item {
+                margin: 3px 0;
+                position: relative;
+            }
+            .message.bot .highlight {
+                background: #e8f5e9;
+                padding: 4px 8px;
+                border-radius: 4px;
+                display: inline-block;
+            }
+            .message.bot .number-list {
+                margin: 5px 0 5px 20px;
+                padding: 0;
+                counter-reset: item;
+            }
+            .message.bot .number-item {
+                margin: 3px 0;
+                position: relative;
+            }
+        </style>
+    `;
+    $('head').append(messageStyles);
+
+     
+    function formatBotMessage(message) {
+        // Skip if message is already HTML
+        if (message.trim().startsWith('<')) {
+            return message;
+        }
+
+        let formattedContent = '<div class="formatted-content">';
+        let sections = message.split(/(?:\r?\n){2,}/); // Split by double newlines
+
+        sections.forEach(section => {
+            if (section.trim()) {
+                let lines = section.trim().split('\n');
+                let formattedSection = '';
+
+                // Check if section starts with a number or bullet point
+                if (lines[0].match(/^\d+\./)) {
+                    // Numbered list
+                    formattedSection = formatNumberedList(lines);
+                } else if (lines[0].match(/^[-•]/)) {
+                    // Bullet list
+                    formattedSection = formatBulletList(lines);
+                } else if (lines[0].includes(':')) {
+                    // Section with title
+                    formattedSection = formatTitledSection(lines);
+                } else {
+                    // Regular paragraph
+                    formattedSection = formatParagraph(lines);
+                }
+
+                formattedContent += formattedSection;
+            }
         });
+
+        formattedContent += '</div>';
+        return formattedContent;
+    }
+
+    function formatNumberedList(lines) {
+        let html = '<div class="section"><ol class="number-list">';
+        lines.forEach(line => {
+            let content = line.replace(/^\d+\.\s*/, '').trim();
+            if (content) {
+                html += `<li class="number-item">${formatInlineContent(content)}</li>`;
+            }
+        });
+        html += '</ol></div>';
+        return html;
+    }
+
+    function formatBulletList(lines) {
+        let html = '<div class="section"><ul class="bullet-list">';
+        lines.forEach(line => {
+            let content = line.replace(/^[-•]\s*/, '').trim();
+            if (content) {
+                html += `<li class="bullet-item">${formatInlineContent(content)}</li>`;
+            }
+        });
+        html += '</ul></div>';
+        return html;
+    }
+
+    function formatTitledSection(lines) {
+        let [title, ...content] = lines[0].split(':');
+        let remainingLines = [...content.join(':'), ...lines.slice(1)].join(' ').trim();
+        
+        return `
+            <div class="section">
+                <div class="section-title">${title.trim()}</div>
+                <div>${formatInlineContent(remainingLines)}</div>
+            </div>
+        `;
+    }
+
+    function formatParagraph(lines) {
+        return `
+            <div class="section">
+                ${formatInlineContent(lines.join(' ').trim())}
+            </div>
+        `;
+    }
+
+    function formatInlineContent(text) {
+        // Format prices
+        text = text.replace(/€\d+(?:\.\d{2})?/g, match => `<span class="highlight">${match}</span>`);
+        
+        // Format important terms
+        text = text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+        
+        // Make URLs clickable
+        text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+        
+        return text;
+    }
+
+    function appendMessage(sender, message, source) {
+        // if (sender === 'bot') {
+        //     message = formatBotMessage(message);
+        // }
+        //message = convertLinksToPreviews(message);
+        let sourceElement = source ? `<div class="source">Generated by AI</div>` : '';
+        let messageElement = `<div class="message ${sender}">${message}${sourceElement}</div>`;
+        $('#chat-messages').append(messageElement);
+        scrollToBottom();
+    }
+
+    
+    function scrollToBottom() {
+        $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
+    }
+
+    // Loading animation functions
+    function showLoading() {
+        $('.loading-dots').remove();
+        
+        const loadingDots = `
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        `;
+        $('#chat-messages').append(loadingDots);
+        $('.loading-dots').show();
+        scrollToBottom();
+    }
+
+    function hideLoading() {
+        $('.loading-dots').remove();
+        scrollToBottom();
+    }
+
+    // Link preview conversion
+    function convertLinksToPreviews(text) {
+        let urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, function (url) {
+            return `<a href="${url}" target="_blank" class="link-preview">
+                        <img src="https://www.google.com/s2/favicons?sz=64&domain=${url}" alt="Link">
+                        <div>
+                            <div class="title">${url}</div>
+                            <div class="description">Click to open</div>
+                        </div>
+                    </a>`;
+        });
+    }
+
+    // Initial greeting function
+    function sendInitialGreeting() {
+        
+        appendMessage('bot', "I'm Maria from SanaExpert. How can I help you today? I'm here to assist you with any questions about our supplements, orders, shipping, or general information about our products.");
+    }
+
+    // Message sending function
+    function sendMessage() {
+        let message = $('#user-input').val().trim();
+        if (message === '') return;
+
+        $('#user-input, #send-button').prop('disabled', true);
+        
+        appendMessage('user', message);
+        $('#user-input').val('');
+        showLoading();
+        
+
+        $.ajax({
+            url: '/chat',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ user_id: userId, message: message }),
+            success: function (data) {
+                hideLoading();
+                if (data.response) {
+                    appendMessage('bot', data.response, data.source);
+                }
+            },
+            error: function () {
+                hideLoading();
+                appendMessage('bot', 'Sorry, something went wrong. Please try again.');
+            },
+            complete: function() {
+                $('#user-input, #send-button').prop('disabled', false);
+                $('#user-input').focus();
+            }
+        });
+    }
+
+    // Event Listeners
+    $('#send-button').click(sendMessage);
+
+    $('#user-input').keypress(function (e) {
+        if (e.which === 13 && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Send initial greeting when page loads
+    sendInitialGreeting();
+});
     </script>
     <script>
         $(document).ready(function () {

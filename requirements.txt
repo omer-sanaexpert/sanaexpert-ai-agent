@@ -17,3 +17,5 @@ pydantic
 gunicorn
 anthropic
 python-dotenv
+user-agents
+geoip2
