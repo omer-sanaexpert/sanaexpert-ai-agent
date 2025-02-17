@@ -1,24 +1,5 @@
-<p>
-<h3>Features</h3>
-<ol>
-    <li>Provide answers to General Questions about SanaExpert e.g what is return policy, when will the product back in stock.</li>
-    <li>Order and shipment tracking (under development)</li>
-    <li>Product Related Questions (e.g how to buy a product)</li>
-    <li>Question about Vouchers (e.g my voucher is not working is it already expired )</li>
-    <li>Escalate to Human (under active development)</li>
-    <li>For order/shippment testing</li>
-    <li>order_id: 521240,postal_code: 45223</li>
-</ol>
-
-</p>
-
 <!-- SanaExpert Chat Widget -->
 <div id="sanaexpert-chat-widget">
-    <!-- Circle Icon -->
-    <div id="sanaexpert-circle-icon" class="circle-icon">
-        Hola ¿En qué puedo ayudarte?
-    </div>
-
     <!-- Chat Button -->
     <div id="sanaexpert-chat-button" class="chat-button">
         <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Chat">
@@ -28,7 +9,7 @@
     <div id="sanaexpert-chat-container" class="chat-container">
         <div class="chat-header">
             <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Logo" class="header-logo">
-            <span>Customer Support</span>
+            <span>AI Agent</span>
             <button class="close-button">&times;</button>
         </div>
         <div class="chat-messages" id="chat-messages">
@@ -45,37 +26,6 @@
 </div>
 
 <style>
-    /* Circle Icon */
-.circle-icon {
-    position: fixed;
-    bottom: 50px; /* Adjust this value to position it above the chat button */
-    right: 90px;
-    
-    padding: 10px;
-    border-radius: 50px;
-    color: #007700;
-    background-color: #ffffff; /* Red color for the circle */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    z-index: 9997; /* Ensure it's below the chat button */
-     /* Optional: Add a pulse animation */
-}
-
-/* Optional: Pulse Animation */
-@keyframes pulse {
-    0% {
-        transform: scale(0.9);
-        opacity: 0.7;
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(0.9);
-        opacity: 0.7;
-    }
-}
-
 /* Chat Widget Base Styles */
 #sanaexpert-chat-widget {
     font-family: Arial, sans-serif;
@@ -103,7 +53,6 @@
     align-items: center;
     justify-content: center;
     transition: transform 0.3s ease;
-     /* Optional: Add a pulse animation */
 }
 
 .chat-button:hover {
@@ -120,11 +69,8 @@
     position: fixed;
     bottom: 90px;
     right: 20px;
-    width: 380px;
-    /* Updated height calculation */
-    height: calc(100vh - 120px);
-    max-height: 700px; /* Added max-height for very large screens */
-    min-height: 400px; /* Added min-height for very small screens */
+    width: 350px;
+    height: 500px;
     background-color: #fff;
     border-radius: 12px;
     box-shadow: 0 5px 25px rgba(0,0,0,0.2);
@@ -143,10 +89,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: relative;
-    z-index: 1;
-    height: 60px;
-    min-height: 60px;
 }
 
 .header-logo {
@@ -160,52 +102,37 @@
     font-size: 24px;
     cursor: pointer;
     padding: 0 5px;
-    transition: transform 0.2s ease;
-}
-
-.close-button:hover {
-    transform: scale(1.1);
 }
 
 /* Chat Messages Area */
 .chat-messages {
     flex: 1;
     padding: 15px;
+    overflow-y: auto;
     background-color: #f9f9f9;
     position: relative;
-    overflow-y: auto;
-    overflow-x: hidden;
-    /* Updated height calculation */
-    height: calc(100% - 120px); /* 60px header + 60px input */
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
 }
 
 .messages-container {
     display: flex;
     flex-direction: column;
-    min-height: min-content;
-    gap: 10px;
 }
 
 /* Message Styles */
 .message {
-    max-width: 90%;
+    max-width: 70%;
     margin-bottom: 15px;
     padding: 10px 15px;
     border-radius: 12px;
     position: relative;
     animation: fadeIn 0.3s ease-in-out;
     word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
 }
 
 .message.user {
     align-self: flex-end;
     background-color: #0d8500;
     color: #fff;
-    margin-left: 10%;
 }
 
 .message.bot {
@@ -213,7 +140,6 @@
     background-color: #fff;
     color: #333;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin-right: 10%;
 }
 
 /* Loading Animation */
@@ -253,11 +179,6 @@
     padding: 10px;
     background-color: #fff;
     border-top: 1px solid #ddd;
-    position: relative;
-    z-index: 1;
-    height: 60px;
-    min-height: 60px;
-    align-items: center;
 }
 
 .chat-input input {
@@ -268,15 +189,10 @@
     outline: none;
     font-size: 14px;
     transition: border-color 0.3s ease;
-    height: 40px;
 }
 
 .chat-input input:focus {
     border-color: #0d8500;
-}
-
-.chat-input input::placeholder {
-    color: #999;
 }
 
 .chat-input button {
@@ -288,17 +204,10 @@
     cursor: pointer;
     margin-left: 10px;
     transition: background-color 0.3s ease;
-    height: 40px;
-    white-space: nowrap;
 }
 
 .chat-input button:hover {
     background-color: #086400;
-}
-
-.chat-input button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
 }
 
 /* Formatted Content Styles */
@@ -337,44 +246,10 @@
     display: inline-block;
 }
 
-/* Source Attribution */
-.source {
-    font-size: 10px;
-    color: #666;
-    margin-top: 5px;
-    font-style: italic;
-    text-align: right;
-}
-.bot-below {
-    font-size: 10px;
-    color: #666;
-    margin-top: 5px;
-    font-style: italic;
-    text-align: right;
-}
-
-/* Link Styles */
-.message a {
-    color: #0d8500;
-    text-decoration: none;
-    word-break: break-all;
-}
-
-.message.user a {
-    color: #ffffff;
-    text-decoration: underline;
-}
-
 /* Animations */
 @keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(10px); 
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes loadingDots {
@@ -395,115 +270,21 @@
 /* Mobile Responsiveness */
 @media (max-width: 480px) {
     .chat-container {
-        width: 92%;
-        height: calc(100vh - 100px); /* Adjusted for mobile */
-        max-height: none; /* Remove max-height on mobile */
-        right: 4%;
-        left: 4%;
-        bottom: 70px;
+        width: 90%;
+        height: 80vh;
+        right: 5%;
+        bottom: 80px;
     }
     
     .chat-button {
         width: 50px;
         height: 50px;
-        bottom: 10px;
-        right: 10px;
     }
-    
-    .chat-messages {
-        height: calc(100% - 120px);
-    }
-    
-   
     
     .chat-button img {
         width: 30px;
     }
-    
-    .message {
-        max-width: 85%;
-    }
-    
-    .chat-input button {
-        padding: 10px 15px;
-    }
 }
-
-/* Scrollbar Styling */
-.chat-messages::-webkit-scrollbar {
-    width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-    background: #0d8500;
-    border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-    background: #086400;
-}    
-
-/* Added styles for different screen sizes */
-@media (min-height: 800px) {
-    .chat-container {
-        height: calc(85vh - 120px); /* Slightly smaller on larger screens */
-    }
-}
-
-@media (max-height: 600px) {
-    .chat-container {
-        height: calc(100vh - 80px);
-        bottom: 70px;
-    }
-    
-    .chat-header {
-        height: 50px;
-        min-height: 50px;
-        padding: 8px 12px;
-    }
-    
-    .chat-input {
-        height: 50px;
-        min-height: 50px;
-    }
-    
-    .chat-messages {
-        height: calc(100% - 100px); /* Adjusted for smaller header/input */
-    }
-}
-
-/* Landscape mode for mobile */
-@media (max-height: 500px) and (orientation: landscape) {
-    .chat-container {
-        height: calc(100vh - 60px);
-        bottom: 50px;
-    }
-    
-    .chat-button {
-        width: 40px;
-        height: 40px;
-        bottom: 5px;
-    }
-    
-    .chat-button img {
-        width: 25px;
-    }
-}
-
-/* Added styles for very large screens */
-@media (min-width: 1200px) and (min-height: 1000px) {
-    .chat-container {
-        width: 400px;
-        max-height: 800px;
-    }
-}
-
-
 </style>
 
 <script>
@@ -529,16 +310,6 @@
 
         // Chat toggle functions
         $('#sanaexpert-chat-button').click(function() {
-            $('#sanaexpert-circle-icon').hide();
-            const $container = $('#sanaexpert-chat-container');
-            $container.fadeToggle();
-            if ($container.css('display') !== 'none' && $('.messages-container').children().length === 0) {
-                sendInitialGreeting();
-            }
-        });
-
-        $('#sanaexpert-circle-icon').click(function() {
-            $('#sanaexpert-circle-icon').hide();
             const $container = $('#sanaexpert-chat-container');
             $container.fadeToggle();
             if ($container.css('display') !== 'none' && $('.messages-container').children().length === 0) {
@@ -640,7 +411,6 @@
             }
             let sourceElement = source ? `<div class="source">Generated by AI</div>` : '';
             let messageElement = `<div class="message ${sender}">${message}${sourceElement}</div>`;
-            
             $('.messages-container').append(messageElement);
             scrollToBottom();
         }
@@ -660,7 +430,7 @@
         }
 
         function sendInitialGreeting() {
-            appendMessage('bot', "Hola, soy María de SanaExpert. 🌿 ¿Cómo puedo ayudarte hoy?");
+            appendMessage('bot', "I'm Maria from SanaExpert. How can I help you today? I'm here to assist you with any questions about our supplements, orders, shipping, or general information about our products.");
         }
 
         // Message sending function
@@ -681,7 +451,7 @@
                 success: function(data) {
                     hideLoading();
                     if (data.response) {
-                        appendMessage('bot', data.response, true);
+                        appendMessage('bot', data.response, data.source);
                     }
                 },
                 error: function() {
