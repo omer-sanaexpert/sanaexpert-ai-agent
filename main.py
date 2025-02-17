@@ -50,6 +50,10 @@ from zendesklib import ZendeskTicketManager
 from user_agents import parse
 import re
 from html import unescape
+from langchain_core.globals import set_llm_cache
+from langchain_core.caches import InMemoryCache
+
+set_llm_cache(InMemoryCache())
 
 load_dotenv() 
 
@@ -58,6 +62,7 @@ load_dotenv()
 manager = ZendeskTicketManager()
 # Cache dictionary to store API responses
 api_cache = {
+    "get_order_information_by_email": {},
     "get_order_information": {},
     "get_voucher_information": {"data": None, "timestamp": None},
     "get_product_information": {"data": None, "timestamp": None}
@@ -178,7 +183,7 @@ pinecone_index = pc.Index(index_name)
 
 
 
-# Load the LaBSE model
+# Load the multilingual-e5-small model
 embedding_model = None
 huggingface_token = os.getenv("HUGGINGFACE_API_TOKEN")
 
@@ -215,9 +220,13 @@ class State(TypedDict):
     messages: Annotated[List[AnyMessage], add_messages]
     thread_id: str | None
     shipping_url: str | None
+    name : str | None
+    email : str | None
+    order_id: str | None
+    postal_code: str | None
 
 @tool
-def get_order_information(order_id: str) -> Dict[str, Any]:
+def get_order_information_by_orderid(order_id: str) -> Dict[str, Any]:
     """Retrieve order and shipping details by order ID.
 
     Args:
@@ -226,7 +235,7 @@ def get_order_information(order_id: str) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: A dictionary containing order details, including shipping information.
     """
-    print("get_order_information")
+    print("get_order_information_by_orderid")
     print("order id : ",order_id)
 
     # Check if the order data is cached and still valid
@@ -246,6 +255,38 @@ def get_order_information(order_id: str) -> Dict[str, Any]:
 
     # Store response in cache
     api_cache["get_order_information"][order_id] = {"data": response.json(), "timestamp": datetime.now()}
+    return response.json()
+
+@tool
+def get_order_information_by_email(email: str) -> Dict[str, Any]:
+    """Retrieve order and shipping details of the last order by email.
+
+    Args:
+        email (str): The email of the customer.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing order details, including shipping information.
+    """
+    print("get_order_information_by_email")
+    print("email: ",email)
+
+    # Check if the order data is cached and still valid
+    if email in api_cache["get_order_information_by_email"]:
+        cached_entry = api_cache["get_order_information"][email]
+        if is_cache_valid(cached_entry["timestamp"]):
+            print("Returning cached order info")
+            return cached_entry["data"]
+
+    # If not cached or expired, call API
+    payload = {
+        "action": "getOrderInformation",
+        "mail_address": email
+    }
+    headers = {"Content-Type": "application/json"}
+    response = requests.post(url, headers=headers, auth=HTTPBasicAuth(username, password), data=json.dumps(payload))
+
+    # Store response in cache
+    api_cache["get_order_information_by_email"][email] = {"data": response.json(), "timestamp": datetime.now()}
     return response.json()
 
 @tool
@@ -326,13 +367,13 @@ def query_knowledgebase_sanaexpert(q: str) -> str:
         q (str): The query string to search in the knowledge base.
 
     Returns:
-        str: A concatenated string of the top 3 matching results from the knowledge base.
+        str: A concatenated string of the top 5 matching results from the knowledge base.
     """
     print("query_knowledgebase_sanaexpert")
     query_embedding = embedding_model.encode([q])[0].tolist()
     results = pinecone_index.query(
         vector=query_embedding,
-        top_k=3,
+        top_k=5,
         include_metadata=True
     )
     return "\n\n".join([match.metadata["text"] for match in results.matches])
@@ -390,9 +431,11 @@ class Assistant:
             
             state = {
                 **state, 
-                "user_info": order_id,
+                "order_id": order_id,
                 "thread_id": thread_id,  # Add thread_id to state
-                "shipping_url": shipping_url
+                "shipping_url": shipping_url,
+                "name": name,
+                "email": email
             }
             #print("Thread ID from assistant: ", thread_id)
             result = self.runnable.invoke(state)
@@ -402,7 +445,7 @@ class Assistant:
                 and not result.content[0].get("text")
             ):
                 messages = state["messages"] + [("user", "Respond with a real output.")]
-                state = {**state, "messages": messages, "thread_id": thread_id, "shipping_url": shipping_url}
+                state = {**state, "messages": messages, "thread_id": thread_id, "shipping_url": shipping_url , "name": name, "email": email}
             else:
                 break
         return {"messages": result}
@@ -445,7 +488,7 @@ def web_search(query: str) -> str:
 
 
 # Tools list
-part_1_tools = [get_order_information, get_product_information, query_knowledgebase_sanaexpert, escalate_to_human, get_voucher_information]
+part_1_tools = [get_order_information_by_orderid,get_order_information_by_email, get_product_information, query_knowledgebase_sanaexpert, escalate_to_human, get_voucher_information]
 
 # Primary assistant prompt
 # Define the primary assistant prompt
@@ -536,7 +579,8 @@ For return/refund requests:
 - get_product_information: For current prices (in EUR) and URLs
 - voucher_information: For promotional code details
 - escalate_to_human: For complex cases requiring human intervention
-- get_order_information: For order and shipping details from order ID
+- get_order_information_by_orderid: For order and shipping details from order ID
+- get_order_information_by_email: For order and shipping details from order ID
 </tool_usage>
 
 <communication_guidelines>
@@ -705,11 +749,6 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
     user_message = strip_html(request_data.message)
     print(user_message)
 
-    # request_info = await extract_request_info(request)
-    # request_data.request_info = request_info
-
-
-
     if not user_id or not user_message:
         raise HTTPException(status_code=400, detail="Both user_id and message are required")
 
@@ -718,12 +757,7 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
             "thread_id": str(uuid.uuid4()),
             "history": []
         }
-        # TODO create an anonymous ticket here
-        #get back the requester and ticket id
-        requester_id, ticket_id = manager.create_anonymous_ticket(
-            user_message
-        )
-        #print(request_info)
+        requester_id, ticket_id = manager.create_anonymous_ticket(user_message)
         requests_and_tickets[user_conversations[user_id]["thread_id"]] = {
             "requester_id": requester_id,
             "ticket_id": ticket_id
@@ -744,6 +778,10 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
 
     user_conversations[user_id]["history"].append(f"\U0001F9D1\u200D\U0001F4BB You: {user_message}")
     input_tokens = count_tokens(user_message)
+    
+    # Initialize a set to track printed events
+    printed_events = set()
+
     try:
         events = part_1_graph.stream(
             {"messages": [("user", (user_message))]}, config, stream_mode="values"
@@ -754,6 +792,9 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
     last_assistant_response = ""
     raw_events = list(events)
     for event in raw_events:
+        # Print each event
+        _print_event(event, printed_events)
+        
         if "messages" in event:
             for message in event["messages"]:
                 if hasattr(message, "content") and "AIMessage" in str(type(message)):
@@ -776,7 +817,6 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
         print("Failed to add public comment to ticket")
     else:
         print("Added public comment to ticket")
-    # Add a public comment to the ticket
     if not manager.add_public_comment(ticket_id, strip_html(last_assistant_response), "32601040249617"):
         print("Failed to add public comment by agent to ticket")
     else:
