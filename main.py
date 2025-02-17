@@ -169,7 +169,7 @@ shipping_url = os.environ.get("SHIPMENT_TRACKING_URL")
 
 # Initialize Pinecone
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
-index_name = "rag-pinecone-sanaexpert"
+index_name = "rag-pinecone-sanaexpertnew"
 
 if index_name not in pc.list_indexes().names():
     pc.create_index(
