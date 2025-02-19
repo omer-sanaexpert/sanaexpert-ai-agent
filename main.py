@@ -8,6 +8,8 @@ from langgraph.prebuilt import ToolNode
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
 from langchain_core.runnables import Runnable, RunnableConfig
 from datetime import datetime
 from langgraph.checkpoint.memory import MemorySaver
@@ -614,9 +616,7 @@ Current thread ID: {thread_id}.
 Never share the thread_id with the customer.
 </thread_handling>
      
-<response_format>
-     must be a valid html and basic css. brand color is #0d8500 , link target new tab. use buttons for links.
-</response_format>
+
      
      
      """),
@@ -751,6 +751,19 @@ async def extract_request_info(request: Request) -> RequestInfo:
         location_info=location_info
     )
 
+html_prompt_template = PromptTemplate(
+        input_variables=["text"],
+        template="""
+        Convert the following text into a valid HTML with basic CSS. brand color is #0d8500 , link target new tab. use buttons for links.
+        
+        Text: "{text}"
+        
+        Response: only return valid html and css code .
+        """
+    )
+    
+    
+
 @app.post("/chat")
 async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBasicCredentials = Depends(authenticate)):
     user_id = request_data.user_id
@@ -788,7 +801,7 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
 
     
     user_conversations[user_id]["history"].append(f"You: {user_message}")
-    input_tokens = count_tokens(user_message)
+    #input_tokens = count_tokens(user_message)
     
     # Initialize a set to track printed events
     printed_events = set()
@@ -817,10 +830,13 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
                     elif isinstance(content, str):
                         last_assistant_response = content
     
-    output_tokens = count_tokens(last_assistant_response)
+    #output_tokens = count_tokens(last_assistant_response)
 
-    print("Input tokens: ", input_tokens)
-    print("Output tokens: ", output_tokens)
+    # chain = LLMChain(llm=llm, prompt=html_prompt_template)
+    # last_assistant_response = chain.run(text=last_assistant_response)
+
+    #print("Input tokens: ", input_tokens)
+    #print("Output tokens: ", output_tokens)
 
     requester_id = requests_and_tickets[thread_id]["requester_id"]
     ticket_id = requests_and_tickets[thread_id]["ticket_id"]

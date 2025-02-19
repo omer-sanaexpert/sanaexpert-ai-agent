@@ -1,482 +1,712 @@
-<!-- SanaExpert Chat Widget -->
-<div id="sanaexpert-chat-widget">
-    <!-- Chat Button -->
-    <div id="sanaexpert-chat-button" class="chat-button">
-        <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Chat">
-    </div>
-
-    <!-- Chat Container -->
-    <div id="sanaexpert-chat-container" class="chat-container">
-        <div class="chat-header">
-            <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Logo" class="header-logo">
-            <span>AI Agent</span>
-            <button class="close-button">&times;</button>
+<p>
+    <h3>Features</h3>
+    <ol>
+        <li>Provide answers to General Questions about SanaExpert e.g what is return policy, when will the product back in stock.</li>
+        <li>Order and shipment tracking (under development)</li>
+        <li>Product Related Questions (e.g how to buy a product)</li>
+        <li>Question about Vouchers (e.g my voucher is not working is it already expired )</li>
+        <li>Escalate to Human (under active development)</li>
+        <li>For order/shippment testing</li>
+        <li>order_id: 521240,postal_code: 45223</li>
+    </ol>
+    
+    </p>
+    
+    <!-- SanaExpert Chat Widget -->
+    <div id="sanaexpert-chat-widget">
+        <!-- Circle Icon -->
+        <div id="sanaexpert-circle-icon" class="circle-icon">
+            ¡Hey! ¿Qué necesitas? 😄
         </div>
-        <div class="chat-messages" id="chat-messages">
-            <div class="messages-container"></div>
-            <div class="loading-dots">
-                <span></span><span></span><span></span>
+    
+        <!-- Chat Button -->
+        <div id="sanaexpert-chat-button" class="chat-button">
+            <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Chat">
+        </div>
+    
+        <!-- Chat Container -->
+        <div id="sanaexpert-chat-container" class="chat-container">
+            <div class="chat-header">
+                <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Logo" class="header-logo">
+                <span>Customer Support</span>
+                <button class="close-button">&times;</button>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="messages-container"></div>
+                <div class="loading-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="user-input" placeholder="Type your message...">
+                <button id="send-button">Send</button>
             </div>
         </div>
-        <div class="chat-input">
-            <input type="text" id="user-input" placeholder="Type your message...">
-            <button id="send-button">Send</button>
-        </div>
     </div>
-</div>
-
-<style>
-/* Chat Widget Base Styles */
-#sanaexpert-chat-widget {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-    box-sizing: border-box;
-}
-
-#sanaexpert-chat-widget * {
-    box-sizing: border-box;
-}
-
-/* Chat Button */
-.chat-button {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: #0d8500;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    cursor: pointer;
-    z-index: 9998;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.3s ease;
-}
-
-.chat-button:hover {
-    transform: scale(1.1);
-}
-
-.chat-button img {
-    width: 35px;
-    height: auto;
-}
-
-/* Chat Container */
-.chat-container {
-    position: fixed;
-    bottom: 90px;
-    right: 20px;
-    width: 350px;
-    height: 500px;
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-    z-index: 9999;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-/* Chat Header */
-.chat-header {
-    background-color: #0d8500;
-    color: #fff;
-    padding: 12px;
-    border-radius: 12px 12px 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.header-logo {
-    height: 24px;
-}
-
-.close-button {
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0 5px;
-}
-
-/* Chat Messages Area */
-.chat-messages {
-    flex: 1;
-    padding: 15px;
-    overflow-y: auto;
-    background-color: #f9f9f9;
-    position: relative;
-}
-
-.messages-container {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Message Styles */
-.message {
-    max-width: 70%;
-    margin-bottom: 15px;
-    padding: 10px 15px;
-    border-radius: 12px;
-    position: relative;
-    animation: fadeIn 0.3s ease-in-out;
-    word-wrap: break-word;
-}
-
-.message.user {
-    align-self: flex-end;
-    background-color: #0d8500;
-    color: #fff;
-}
-
-.message.bot {
-    align-self: flex-start;
-    background-color: #fff;
-    color: #333;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-/* Loading Animation */
-.loading-dots {
-    display: none;
-    padding: 10px 15px;
-    margin-bottom: 15px;
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    width: fit-content;
-    align-self: flex-start;
-}
-
-.loading-dots span {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #0d8500;
-    margin: 0 3px;
-    opacity: 0;
-    animation: loadingDots 1.4s infinite;
-}
-
-.loading-dots span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.loading-dots span:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-/* Chat Input Area */
-.chat-input {
-    display: flex;
-    padding: 10px;
-    background-color: #fff;
-    border-top: 1px solid #ddd;
-}
-
-.chat-input input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    outline: none;
-    font-size: 14px;
-    transition: border-color 0.3s ease;
-}
-
-.chat-input input:focus {
-    border-color: #0d8500;
-}
-
-.chat-input button {
-    padding: 10px 20px;
-    background-color: #0d8500;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-left: 10px;
-    transition: background-color 0.3s ease;
-}
-
-.chat-input button:hover {
-    background-color: #086400;
-}
-
-/* Formatted Content Styles */
-.formatted-content {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
-}
-
-.section {
-    margin: 10px 0;
-    padding: 8px 12px;
-    background: #f8f9f9;
-    border-radius: 8px;
-}
-
-.section-title {
-    color: #0d8500;
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.bullet-list, .number-list {
-    margin: 5px 0 5px 20px;
-    padding: 0;
-}
-
-.bullet-item, .number-item {
-    margin: 3px 0;
-    position: relative;
-}
-
-.highlight {
-    background: #e8f5e9;
-    padding: 4px 8px;
-    border-radius: 4px;
-    display: inline-block;
-}
-
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes loadingDots {
-    0% {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.2);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 480px) {
-    .chat-container {
-        width: 90%;
-        height: 80vh;
-        right: 5%;
-        bottom: 80px;
+    
+    <style>
+        /* Circle Icon */
+    .circle-icon {
+        position: fixed;
+        bottom: 50px; /* Adjust this value to position it above the chat button */
+        right: 90px;
+        
+        padding: 10px;
+        border-radius: 50px;
+        color: #007700;
+        background-color: #ffffff; /* Red color for the circle */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 9997; /* Ensure it's below the chat button */
+         /* Optional: Add a pulse animation */
     }
     
+    /* Optional: Pulse Animation */
+    @keyframes pulse {
+        0% {
+            transform: scale(0.9);
+            opacity: 0.7;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(0.9);
+            opacity: 0.7;
+        }
+    }
+    
+    /* Chat Widget Base Styles */
+    #sanaexpert-chat-widget {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        box-sizing: border-box;
+    }
+    
+    #sanaexpert-chat-widget * {
+        box-sizing: border-box;
+    }
+    
+    /* Chat Button */
     .chat-button {
-        width: 50px;
-        height: 50px;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #0d8500;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        cursor: pointer;
+        z-index: 9998;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+         /* Optional: Add a pulse animation */
+    }
+    
+    .chat-button:hover {
+        transform: scale(1.1);
     }
     
     .chat-button img {
-        width: 30px;
+        width: 35px;
+        height: auto;
     }
-}
-</style>
-
-<script>
-(function() {
-    // Wait for jQuery
-    function waitForJQuery(callback) {
-        if (window.jQuery) {
-            callback();
-        } else {
-            var script = document.createElement('script');
-            script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
-            script.onload = function() {
+    
+    /* Chat Container */
+    .chat-container {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        width: 380px;
+        /* Updated height calculation */
+        height: calc(100vh - 120px);
+        max-height: 700px; /* Added max-height for very large screens */
+        min-height: 400px; /* Added min-height for very small screens */
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+        z-index: 9999;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    /* Chat Header */
+    .chat-header {
+        background-color: #0d8500;
+        color: #fff;
+        padding: 12px;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+        height: 60px;
+        min-height: 60px;
+    }
+    
+    .header-logo {
+        height: 24px;
+    }
+    
+    .close-button {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0 5px;
+        transition: transform 0.2s ease;
+    }
+    
+    .close-button:hover {
+        transform: scale(1.1);
+    }
+    
+    /* Chat Messages Area */
+    .chat-messages {
+        flex: 1;
+        padding: 15px;
+        background-color: #f9f9f9;
+        position: relative;
+        overflow-y: auto;
+        overflow-x: hidden;
+        /* Updated height calculation */
+        height: calc(100% - 120px); /* 60px header + 60px input */
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+    
+    .messages-container {
+        display: flex;
+        flex-direction: column;
+        min-height: min-content;
+        gap: 10px;
+    }
+    
+    /* Message Styles */
+    .message {
+        max-width: 90%;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        border-radius: 12px;
+        position: relative;
+        animation: fadeIn 0.3s ease-in-out;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+    
+    .message.user {
+        align-self: flex-end;
+        background-color: #0d8500;
+        color: #fff;
+        margin-left: 10%;
+    }
+    
+    .message.bot {
+        align-self: flex-start;
+        background-color: #fff;
+        color: #333;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-right: 10%;
+    }
+    
+    /* Loading Animation */
+    .loading-dots {
+        display: none;
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        width: fit-content;
+        align-self: flex-start;
+    }
+    
+    .loading-dots span {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #0d8500;
+        margin: 0 3px;
+        opacity: 0;
+        animation: loadingDots 1.4s infinite;
+    }
+    
+    .loading-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .loading-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    /* Chat Input Area */
+    .chat-input {
+        display: flex;
+        padding: 10px;
+        background-color: #fff;
+        border-top: 1px solid #ddd;
+        position: relative;
+        z-index: 1;
+        height: 60px;
+        min-height: 60px;
+        align-items: center;
+    }
+    
+    .chat-input input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        outline: none;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+        height: 40px;
+    }
+    
+    .chat-input input:focus {
+        border-color: #0d8500;
+    }
+    
+    .chat-input input::placeholder {
+        color: #999;
+    }
+    
+    .chat-input button {
+        padding: 10px 20px;
+        background-color: #0d8500;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-left: 10px;
+        transition: background-color 0.3s ease;
+        height: 40px;
+        white-space: nowrap;
+    }
+    
+    .chat-input button:hover {
+        background-color: #086400;
+    }
+    
+    .chat-input button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    
+    /* Formatted Content Styles */
+    .formatted-content {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+    }
+    
+    .section {
+        margin: 10px 0;
+        padding: 8px 12px;
+        background: #f8f9f9;
+        border-radius: 8px;
+    }
+    
+    .section-title {
+        color: #0d8500;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .bullet-list, .number-list {
+        margin: 5px 0 5px 20px;
+        padding: 0;
+    }
+    
+    .bullet-item, .number-item {
+        margin: 3px 0;
+        position: relative;
+    }
+    
+    .highlight {
+        background: #e8f5e9;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+    
+    /* Source Attribution */
+    .source {
+        font-size: 10px;
+        color: #666;
+        margin-top: 5px;
+        font-style: italic;
+        text-align: right;
+    }
+    .bot-below {
+        font-size: 10px;
+        color: #666;
+        margin-top: 5px;
+        font-style: italic;
+        text-align: right;
+    }
+    
+    /* Link Styles */
+    .message a {
+        color: #0d8500;
+        text-decoration: none;
+        word-break: break-all;
+    }
+    
+    .message.user a {
+        color: #ffffff;
+        text-decoration: underline;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { 
+            opacity: 0; 
+            transform: translateY(10px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+    }
+    
+    @keyframes loadingDots {
+        0% {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+        100% {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+    }
+    
+    /* Mobile Responsiveness */
+    @media (max-width: 480px) {
+        .chat-container {
+            width: 92%;
+            height: calc(100vh - 100px); /* Adjusted for mobile */
+            max-height: none; /* Remove max-height on mobile */
+            right: 4%;
+            left: 4%;
+            bottom: 70px;
+        }
+        
+        .chat-button {
+            width: 50px;
+            height: 50px;
+            bottom: 10px;
+            right: 10px;
+        }
+        
+        .chat-messages {
+            height: calc(100% - 120px);
+        }
+        
+       
+        
+        .chat-button img {
+            width: 30px;
+        }
+        
+        .message {
+            max-width: 85%;
+        }
+        
+        .chat-input button {
+            padding: 10px 15px;
+        }
+    }
+    
+    /* Scrollbar Styling */
+    .chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: #0d8500;
+        border-radius: 3px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: #086400;
+    }    
+    
+    /* Added styles for different screen sizes */
+    @media (min-height: 800px) {
+        .chat-container {
+            height: calc(85vh - 120px); /* Slightly smaller on larger screens */
+        }
+    }
+    
+    @media (max-height: 600px) {
+        .chat-container {
+            height: calc(100vh - 80px);
+            bottom: 70px;
+        }
+        
+        .chat-header {
+            height: 50px;
+            min-height: 50px;
+            padding: 8px 12px;
+        }
+        
+        .chat-input {
+            height: 50px;
+            min-height: 50px;
+        }
+        
+        .chat-messages {
+            height: calc(100% - 100px); /* Adjusted for smaller header/input */
+        }
+    }
+    
+    /* Landscape mode for mobile */
+    @media (max-height: 500px) and (orientation: landscape) {
+        .chat-container {
+            height: calc(100vh - 60px);
+            bottom: 50px;
+        }
+        
+        .chat-button {
+            width: 40px;
+            height: 40px;
+            bottom: 5px;
+        }
+        
+        .chat-button img {
+            width: 25px;
+        }
+    }
+    
+    /* Added styles for very large screens */
+    @media (min-width: 1200px) and (min-height: 1000px) {
+        .chat-container {
+            width: 400px;
+            max-height: 800px;
+        }
+    }
+    
+    
+    </style>
+    
+    <script>
+    (function() {
+        // Wait for jQuery
+        function waitForJQuery(callback) {
+            if (window.jQuery) {
                 callback();
-            };
-            document.head.appendChild(script);
+            } else {
+                var script = document.createElement('script');
+                script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+                script.onload = function() {
+                    callback();
+                };
+                document.head.appendChild(script);
+            }
         }
-    }
-
-    // Initialize chat widget
-    function initChatWidget() {
-        let userId = localStorage.getItem('sanaexpert_user_id') || `user_${Math.floor(Math.random() * 100000)}`;
-        localStorage.setItem('sanaexpert_user_id', userId);
-
-        // Chat toggle functions
-        $('#sanaexpert-chat-button').click(function() {
-            const $container = $('#sanaexpert-chat-container');
-            $container.fadeToggle();
-            if ($container.css('display') !== 'none' && $('.messages-container').children().length === 0) {
-                sendInitialGreeting();
-            }
-        });
-
-        $('.close-button').click(function() {
-            $('#sanaexpert-chat-container').fadeOut();
-        });
-
-        // Message formatting functions
-        function formatBotMessage(message) {
-            if (message.trim().startsWith('<')) {
-                return message;
-            }
-
-            let formattedContent = '<div class="formatted-content">';
-            let sections = message.split(/(?:\r?\n){2,}/);
-
-            sections.forEach(section => {
-                if (section.trim()) {
-                    let lines = section.trim().split('\n');
-                    let formattedSection = '';
-
-                    if (lines[0].match(/^\d+\./)) {
-                        formattedSection = formatNumberedList(lines);
-                    } else if (lines[0].match(/^[-•]/)) {
-                        formattedSection = formatBulletList(lines);
-                    } else if (lines[0].includes(':')) {
-                        formattedSection = formatTitledSection(lines);
-                    } else {
-                        formattedSection = formatParagraph(lines);
+    
+        // Initialize chat widget
+        function initChatWidget() {
+            let userId = localStorage.getItem('sanaexpert_user_id') || `user_${Math.floor(Math.random() * 100000)}`;
+            localStorage.setItem('sanaexpert_user_id', userId);
+    
+            // Chat toggle functions
+            $('#sanaexpert-chat-button').click(function() {
+                $('#sanaexpert-circle-icon').hide();
+                const $container = $('#sanaexpert-chat-container');
+                $container.fadeToggle();
+                if ($container.css('display') !== 'none' && $('.messages-container').children().length === 0) {
+                    sendInitialGreeting();
+                }
+            });
+    
+            $('#sanaexpert-circle-icon').click(function() {
+                $('#sanaexpert-circle-icon').hide();
+                const $container = $('#sanaexpert-chat-container');
+                $container.fadeToggle();
+                if ($container.css('display') !== 'none' && $('.messages-container').children().length === 0) {
+                    sendInitialGreeting();
+                }
+            });
+    
+            $('.close-button').click(function() {
+                $('#sanaexpert-chat-container').fadeOut();
+            });
+    
+            // Message formatting functions
+            function formatBotMessage(message) {
+                if (message.trim().startsWith('<')) {
+                    return message;
+                }
+    
+                let formattedContent = '<div class="formatted-content">';
+                let sections = message.split(/(?:\r?\n){2,}/);
+    
+                sections.forEach(section => {
+                    if (section.trim()) {
+                        let lines = section.trim().split('\n');
+                        let formattedSection = '';
+    
+                        if (lines[0].match(/^\d+\./)) {
+                            formattedSection = formatNumberedList(lines);
+                        } else if (lines[0].match(/^[-•]/)) {
+                            formattedSection = formatBulletList(lines);
+                        } else if (lines[0].includes(':')) {
+                            formattedSection = formatTitledSection(lines);
+                        } else {
+                            formattedSection = formatParagraph(lines);
+                        }
+    
+                        formattedContent += formattedSection;
                     }
-
-                    formattedContent += formattedSection;
-                }
-            });
-
-            formattedContent += '</div>';
-            return formattedContent;
-        }
-
-        function formatNumberedList(lines) {
-            let html = '<div class="section"><ol class="number-list">';
-            lines.forEach(line => {
-                let content = line.replace(/^\d+\.\s*/, '').trim();
-                if (content) {
-                    html += `<li class="number-item">${formatInlineContent(content)}</li>`;
-                }
-            });
-            html += '</ol></div>';
-            return html;
-        }
-
-        function formatBulletList(lines) {
-            let html = '<div class="section"><ul class="bullet-list">';
-            lines.forEach(line => {
-                let content = line.replace(/^[-•]\s*/, '').trim();
-                if (content) {
-                    html += `<li class="bullet-item">${formatInlineContent(content)}</li>`;
-                }
-            });
-            html += '</ul></div>';
-            return html;
-        }
-
-        function formatTitledSection(lines) {
-            let [title, ...content] = lines[0].split(':');
-            let remainingLines = [...content.join(':'), ...lines.slice(1)].join(' ').trim();
-            
-            return `
-                <div class="section">
-                    <div class="section-title">${title.trim()}</div>
-                    <div>${formatInlineContent(remainingLines)}</div>
-                </div>
-            `;
-        }
-
-        function formatParagraph(lines) {
-            return `
-                <div class="section">
-                    ${formatInlineContent(lines.join(' ').trim())}
-                </div>
-            `;
-        }
-
-        function formatInlineContent(text) {
-            text = text.replace(/€\d+(?:\.\d{2})?/g, match => `<span class="highlight">${match}</span>`);
-            text = text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
-            text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
-            return text;
-        }
-
-        // Message handling functions
-        function appendMessage(sender, message, source) {
-            if (sender === 'bot') {
-                message = formatBotMessage(message);
+                });
+    
+                formattedContent += '</div>';
+                return formattedContent;
             }
-            let sourceElement = source ? `<div class="source">Generated by AI</div>` : '';
-            let messageElement = `<div class="message ${sender}">${message}${sourceElement}</div>`;
-            $('.messages-container').append(messageElement);
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            const messagesDiv = $('.chat-messages');
-            messagesDiv.scrollTop(messagesDiv[0].scrollHeight);
-        }
-
-        function showLoading() {
-            $('.loading-dots').show();
-            scrollToBottom();
-        }
-
-        function hideLoading() {
-            $('.loading-dots').hide();
-        }
-
-        function sendInitialGreeting() {
-            appendMessage('bot', "I'm Maria from SanaExpert. How can I help you today? I'm here to assist you with any questions about our supplements, orders, shipping, or general information about our products.");
-        }
-
-        // Message sending function
-        function sendMessage() {
-            let message = $('#user-input').val().trim();
-            if (message === '') return;
-
-            $('#user-input, #send-button').prop('disabled', true);
-            appendMessage('user', message);
-            $('#user-input').val('');
-            showLoading();
-
-            $.ajax({
-                url: '/chat', // Update this URL to your chat endpoint
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ user_id: userId, message: message }),
-                success: function(data) {
-                    hideLoading();
-                    if (data.response) {
-                        appendMessage('bot', data.response, data.source);
+    
+            function formatNumberedList(lines) {
+                let html = '<div class="section"><ol class="number-list">';
+                lines.forEach(line => {
+                    let content = line.replace(/^\d+\.\s*/, '').trim();
+                    if (content) {
+                        html += `<li class="number-item">${formatInlineContent(content)}</li>`;
                     }
-                },
-                error: function() {
-                    hideLoading();
-                    appendMessage('bot', 'Sorry, something went wrong. Please try again.');
-                },
-                complete: function() {
-                    $('#user-input, #send-button').prop('disabled', false);
-                    $('#user-input').focus();
+                });
+                html += '</ol></div>';
+                return html;
+            }
+    
+            function formatBulletList(lines) {
+                let html = '<div class="section"><ul class="bullet-list">';
+                lines.forEach(line => {
+                    let content = line.replace(/^[-•]\s*/, '').trim();
+                    if (content) {
+                        html += `<li class="bullet-item">${formatInlineContent(content)}</li>`;
+                    }
+                });
+                html += '</ul></div>';
+                return html;
+            }
+    
+            function formatTitledSection(lines) {
+                let [title, ...content] = lines[0].split(':');
+                let remainingLines = [...content.join(':'), ...lines.slice(1)].join(' ').trim();
+                
+                return `
+                    <div class="section">
+                        <div class="section-title">${title.trim()}</div>
+                        <div>${formatInlineContent(remainingLines)}</div>
+                    </div>
+                `;
+            }
+    
+            function formatParagraph(lines) {
+                return `
+                    <div class="section">
+                        ${formatInlineContent(lines.join(' ').trim())}
+                    </div>
+                `;
+            }
+    
+            function formatInlineContent(text) {
+                text = text.replace(/€\d+(?:\.\d{2})?/g, match => `<span class="highlight">${match}</span>`);
+                text = text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+                text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+                return text;
+            }
+    
+            // Message handling functions
+            function appendMessage(sender, message, source) {
+                if (sender === 'bot') {
+                    message = formatBotMessage(message);
+                }
+                let sourceElement = source ? `<div class="source">Generated by AI</div>` : '';
+                let messageElement = `<div class="message ${sender}">${message}${sourceElement}</div>`;
+                
+                $('.messages-container').append(messageElement);
+                scrollToBottom();
+            }
+    
+            function scrollToBottom() {
+                const messagesDiv = $('.chat-messages');
+                messagesDiv.scrollTop(messagesDiv[0].scrollHeight);
+            }
+    
+            function showLoading() {
+                $('.loading-dots').show();
+                scrollToBottom();
+            }
+    
+            function hideLoading() {
+                $('.loading-dots').hide();
+            }
+    
+            function sendInitialGreeting() {
+                appendMessage('bot', "Hola, soy María de SanaExpert. 🌿 ¿Cómo puedo ayudarte hoy?");
+            }
+    
+            // Message sending function
+            function sendMessage() {
+                let message = $('#user-input').val().trim();
+                if (message === '') return;
+    
+                $('#user-input, #send-button').prop('disabled', true);
+                appendMessage('user', message);
+                $('#user-input').val('');
+                showLoading();
+    
+                $.ajax({
+                    url: 'https://sanaexpertai.azurewebsites.net/chat', // Update this URL to your chat endpoint
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ user_id: userId, message: message }),
+                    success: function(data) {
+                        hideLoading();
+                        if (data.response) {
+                            appendMessage('bot', data.response, true);
+                        }
+                    },
+                    error: function() {
+                        hideLoading();
+                        appendMessage('bot', 'Sorry, something went wrong. Please try again.');
+                    },
+                    complete: function() {
+                        $('#user-input, #send-button').prop('disabled', false);
+                        $('#user-input').focus();
+                    }
+                });
+            }
+    
+            // Event listeners
+            $('#send-button').click(sendMessage);
+    
+            $('#user-input').keypress(function(e) {
+                if (e.which === 13 && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
                 }
             });
         }
-
-        // Event listeners
-        $('#send-button').click(sendMessage);
-
-        $('#user-input').keypress(function(e) {
-            if (e.which === 13 && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-
-    // Start initialization
-    waitForJQuery(initChatWidget);
-})();
-</script>
+    
+        // Start initialization
+        waitForJQuery(initChatWidget);
+    })();
+    </script>
