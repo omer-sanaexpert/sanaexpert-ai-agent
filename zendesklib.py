@@ -124,11 +124,11 @@ class ZendeskTicketManager:
 
         ticket_data = {
             "request": {
-                "subject": "Test Support Request by Test User",
+                "subject": "Test Support Request from Shopify ES",
                 "comment": {
                     "body": "SanaExpert - Support Team.",
                     "author_id": "31549253490321",
-                    "public": False
+                    "public": False,
                 },
                 "requester": {
                     "name": temp_name
@@ -146,6 +146,21 @@ class ZendeskTicketManager:
             response.raise_for_status()
             
             ticket = response.json()["request"]
+
+            #update the ticket status to pending
+            ticket_data = {
+                    "ticket": {
+                        "status": "pending",
+                        "tags": ["ticket_by_ai"]
+                    }
+                }
+            response = requests.put(
+                f"{self.base_url}/api/v2/tickets/{ticket['id']}",
+                auth=self.auth,
+                headers=self.headers,
+                json=ticket_data
+            )
+            response.raise_for_status()
             self.current_ticket_id = ticket['id']
             return ticket["requester_id"], ticket["id"]
             
@@ -270,7 +285,7 @@ class ZendeskTicketManager:
                 json=user_data
             )
             update_response.raise_for_status()
-            self.update_ticket_status(self.current_ticket_id, "open")
+            self.update_ticket_status(ticket_id, "open")
             return True
             
         except requests.exceptions.RequestException as e:
@@ -295,7 +310,8 @@ class ZendeskTicketManager:
                     "body": comment,
                     "public": False,
                 }
-            }
+            },
+            "tags": ["ticket_by_ai"]
         }
         
         if requester_id != "32601040249617":

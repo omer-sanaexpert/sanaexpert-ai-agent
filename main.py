@@ -52,6 +52,7 @@ import re
 from html import unescape
 from langchain_core.globals import set_llm_cache
 from langchain_core.caches import InMemoryCache
+from fastapi.middleware.cors import CORSMiddleware
 
 set_llm_cache(InMemoryCache())
 
@@ -154,6 +155,13 @@ load_dotenv()
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(SessionMiddleware, secret_key="your-secret-keykshdfbdsjkfh")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 print("welcome")
 
 # In-memory storage for user conversations
@@ -763,6 +771,8 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
             "ticket_id": ticket_id
         }
 
+    # the problem could be that a user couldnt be able to create multiple tickets.
+
     thread_id = user_conversations[user_id]["thread_id"]
     print("Thread ID from chat: ", thread_id)
     config = {
@@ -776,7 +786,8 @@ async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBas
         }
     }
 
-    user_conversations[user_id]["history"].append(f"\U0001F9D1\u200D\U0001F4BB You: {user_message}")
+    
+    user_conversations[user_id]["history"].append(f"You: {user_message}")
     input_tokens = count_tokens(user_message)
     
     # Initialize a set to track printed events
