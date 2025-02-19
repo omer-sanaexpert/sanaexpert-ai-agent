@@ -148,19 +148,19 @@ class ZendeskTicketManager:
             ticket = response.json()["request"]
 
             #update the ticket status to pending
-            ticket_data = {
-                    "ticket": {
-                        "status": "pending",
-                        "tags": ["ticket_by_ai"]
-                    }
-                }
-            response = requests.put(
-                f"{self.base_url}/api/v2/tickets/{ticket['id']}",
-                auth=self.auth,
-                headers=self.headers,
-                json=ticket_data
-            )
-            response.raise_for_status()
+            # ticket_data = {
+            #         "ticket": {
+            #             "status": "pending",
+            #             "tags": ["ticket_by_ai"]
+            #         }
+            #     }
+            # response = requests.put(
+            #     f"{self.base_url}/api/v2/tickets/{ticket['id']}",
+            #     auth=self.auth,
+            #     headers=self.headers,
+            #     json=ticket_data
+            # )
+            # response.raise_for_status()
             self.current_ticket_id = ticket['id']
             return ticket["requester_id"], ticket["id"]
             
