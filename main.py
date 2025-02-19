@@ -586,7 +586,7 @@ For return/refund requests:
 - SanaExpertKnowledgebase: For company/product/policy information
 - get_product_information: For current prices (in EUR) and URLs
 - voucher_information: For promotional code details
-- escalate_to_human: For complex cases requiring human intervention
+- escalate_to_human: For complex cases requiring human intervention. Also for return, refund, cancel or modify order and escalation requests
 - get_order_information_by_orderid: For order and shipping details from order ID
 - get_order_information_by_email: For order and shipping details from order ID
 </tool_usage>
