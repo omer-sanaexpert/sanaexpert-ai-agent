@@ -498,7 +498,7 @@ def web_search(query: str) -> str:
 
 
 # Tools list
-part_1_tools = [get_order_information_by_orderid,get_order_information_by_email, get_product_information, query_knowledgebase_sanaexpert, escalate_to_human, get_voucher_information]
+part_1_tools = [get_order_information_by_orderid,get_order_information_by_email, get_product_information, query_knowledgebase_sanaexpert, escalate_to_human]
 
 # Primary assistant prompt
 # Define the primary assistant prompt
@@ -579,15 +579,15 @@ primary_assistant_prompt = ChatPromptTemplate.from_messages([
 </shippment_url>
 
 <refund_protocol>
-For return/refund requests:
-1. Collect customer name and email
+For return/refund or cancel/modify requests and voucher related queries:
+1. Collect customer name (must required) and email (must required) 
+2. Collect any message or details if needed (optional)
 2. Escalate to human support immediately
 </refund_protocol>
 
 <tool_usage>
 - SanaExpertKnowledgebase: For company/product/policy information
 - get_product_information: For current prices (in EUR) and URLs
-- voucher_information: For promotional code details
 - escalate_to_human: For complex cases requiring human intervention. Also for return, refund, cancel or modify order and escalation requests
 - get_order_information_by_orderid: For order and shipping details from order ID
 - get_order_information_by_email: For order and shipping details from order ID
