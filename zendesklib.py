@@ -124,7 +124,7 @@ class ZendeskTicketManager:
 
         ticket_data = {
             "request": {
-                "subject": "Test Support Request from Shopify ES",
+                "subject": "Support Request from Shopify ES",
                 "comment": {
                     "body": "SanaExpert - Support Team.",
                     "author_id": "31549253490321",
@@ -184,8 +184,8 @@ class ZendeskTicketManager:
                 "status": new_status
             }
         }
-        #assign to omer jadoon
-        ticket_data["ticket"]["assignee_id"] = "31549253490321"
+        #assign to omer jadoon, clara
+        ticket_data["ticket"]["assignee_id"] = "25793382446353"
         
         try:
             response = requests.put(
