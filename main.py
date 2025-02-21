@@ -772,7 +772,7 @@ html_prompt_template = PromptTemplate(
     
 
 @app.post("/chat")
-async def chat(request_data: ChatRequest, request: Request, credentials: HTTPBasicCredentials = Depends(authenticate)):
+async def chat(request_data: ChatRequest, request: Request):
     user_id = request_data.user_id
     user_message = strip_html(request_data.message)
     print(user_message)
