@@ -21,7 +21,7 @@ import uuid
 import os
 from dotenv import load_dotenv
 import pandas as pd
-from pinecone import Pinecone, ServerlessSpec
+
 from sentence_transformers import SentenceTransformer
 from langchain_core.tools import tool  # Import the @tool decorator
 import requests
@@ -178,18 +178,32 @@ password = os.environ.get("SCL_PASSWORD")
 shipping_url = os.environ.get("SHIPMENT_TRACKING_URL")
 
 # Initialize Pinecone
+#pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
+from pinecone import (
+    Pinecone,
+    ServerlessSpec,
+    CloudProvider,
+    AwsRegion,
+    VectorType
+)
+
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
+
 index_name = "rag-pinecone-sanaexpertnew"
 
-if index_name not in pc.list_indexes().names():
+# Check if the index exists; if not, create a serverless index using pod_type="serverless"
+if index_name not in pc.list_indexes():
     pc.create_index(
         name=index_name,
         dimension=768,
         metric="cosine",
-        spec=ServerlessSpec(cloud="aws", region="us-east-1")
+        pod_type="serverless"
     )
 
-pinecone_index = pc.Index(index_name)
+# Retrieve the index
+pinecone_index = pinecone.Index(index_name)
+index_name = "rag-pinecone-sanaexpertnew"
+
 
 
 

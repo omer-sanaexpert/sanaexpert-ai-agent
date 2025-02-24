@@ -7,7 +7,7 @@ langgraph
 langchain-anthropic
 tavily-python
 pandas
-pinecone-client
+pinecone
 langchain_core
 fastapi
 uvicorn
