@@ -1,8 +1,3 @@
-<p>
-    welcome to SanaExpert AI agent
-</p>
-
-<!-- SanaExpert Chat Widget -->
 <div id="sanaexpert-chat-widget">
     <!-- Circle Icon -->
     <div id="sanaexpert-circle-icon" class="circle-icon">
@@ -11,14 +6,14 @@
 
     <!-- Chat Button -->
     <div id="sanaexpert-chat-button" class="chat-button">
-        <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Chat">
+        <img src="https://www.pngplay.com/wp-content/uploads/7/Chat-Message-Background-PNG-Image.png" alt="SanaExpert Chat">
     </div>
 
     <!-- Chat Container -->
     <div id="sanaexpert-chat-container" class="chat-container">
         <div class="chat-header">
             <img src="https://lps.sanaexpert.de/wp-content/uploads/2022/07/sanaexpert_white.png" alt="SanaExpert Logo" class="header-logo">
-            <span>Customer Support</span>
+            <span style="font-size: medium;">Customer Support</span>
             <button class="close-button">&times;</button>
         </div>
         <div class="chat-messages" id="chat-messages">
@@ -38,12 +33,13 @@
     /* Circle Icon */
 .circle-icon {
     position: fixed;
-    bottom: 50px; /* Adjust this value to position it above the chat button */
-    right: 90px;
+    bottom: 90px; /* Adjust this value to position it above the chat button */
+    right: 30px;
     
     padding: 10px;
     border-radius: 50px;
     color: #007700;
+    font-size: small;
     background-color: #ffffff; /* Red color for the circle */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     z-index: 9997; /* Ensure it's below the chat button */
@@ -85,7 +81,7 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background-color: #0d8500;
+    background-color:rgb(140, 182, 62);
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     cursor: pointer;
     z-index: 9998;
@@ -496,207 +492,156 @@
 
 </style>
 
+
+
 <script>
-(function() {
-    // Wait for jQuery
-    function waitForJQuery(callback) {
-        if (window.jQuery) {
-            callback();
-        } else {
-            var script = document.createElement('script');
-            script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
-            script.onload = function() {
-                callback();
-            };
-            document.head.appendChild(script);
-        }
-    }
 
-    // Initialize chat widget
-    function initChatWidget() {
-        let userId = localStorage.getItem('sanaexpert_user_id') || `user_${Math.floor(Math.random() * 100000)}`;
-        localStorage.setItem('sanaexpert_user_id', userId);
-
-        // Chat toggle functions
-        $('#sanaexpert-chat-button').click(function() {
-            $('#sanaexpert-circle-icon').hide();
-            const $container = $('#sanaexpert-chat-container');
-            $container.fadeToggle();
-            if ($container.css('display') !== 'none' && $('.messages-container').children().length === 0) {
-                sendInitialGreeting();
+    $(document).ready(function() {
+        // Initialize Chat Widget
+        function initChatWidget() {
+            try {
+                let userId = localStorage.getItem('sanaexpert_user_id') || `user_${Math.floor(Math.random() * 100000)}`;
+                localStorage.setItem('sanaexpert_user_id', userId);
+            } catch (error) {
+                console.error('LocalStorage Error:', error);
             }
-        });
-
-        $('#sanaexpert-circle-icon').click(function() {
-            $('#sanaexpert-circle-icon').hide();
-            const $container = $('#sanaexpert-chat-container');
-            $container.fadeToggle();
-            if ($container.css('display') !== 'none' && $('.messages-container').children().length === 0) {
-                sendInitialGreeting();
+    
+            // Cached selectors for performance
+            const $chatContainer = $('#sanaexpert-chat-container');
+            const $chatButton = $('#sanaexpert-chat-button, #sanaexpert-circle-icon');
+            const $closeButton = $('.close-button');
+            const $messagesContainer = $('.messages-container');
+            const $userInput = $('#user-input');
+            const $sendButton = $('#send-button');
+            const $loadingDots = $('.loading-dots');
+    
+            // Toggle Chat Visibility
+            function toggleChat() {
+                $('#sanaexpert-circle-icon').hide();
+                $chatContainer.fadeToggle();
+                if ($chatContainer.is(':visible') && $messagesContainer.children().length === 0) {
+                    sendInitialGreeting();
+                }
             }
-        });
-
-        $('.close-button').click(function() {
-            $('#sanaexpert-chat-container').fadeOut();
-        });
-
-        // Message formatting functions
-        function formatBotMessage(message) {
-            if (message.trim().startsWith('<')) {
-                return message;
-            }
-
-            let formattedContent = '<div class="formatted-content">';
-            let sections = message.split(/(?:\r?\n){2,}/);
-
-            sections.forEach(section => {
-                if (section.trim()) {
-                    let lines = section.trim().split('\n');
-                    let formattedSection = '';
-
-                    if (lines[0].match(/^\d+\./)) {
-                        formattedSection = formatNumberedList(lines);
-                    } else if (lines[0].match(/^[-•]/)) {
-                        formattedSection = formatBulletList(lines);
-                    } else if (lines[0].includes(':')) {
-                        formattedSection = formatTitledSection(lines);
-                    } else {
-                        formattedSection = formatParagraph(lines);
+    
+            $chatButton.on('click', toggleChat);
+            $closeButton.on('click', () => $chatContainer.fadeOut());
+    
+            // Message Formatting
+            function formatBotMessage(message) {
+                if (message.trim().startsWith('<')) return message;
+                let formattedContent = '<div class="formatted-content">';
+                let sections = message.split(/(?:\r?\n){2,}/);
+                sections.forEach(section => {
+                    if (section.trim()) {
+                        let lines = section.trim().split('\n');
+                        let formattedSection = '';
+    
+                        if (lines[0].match(/^\d+\./)) {
+                            formattedSection = formatList(lines, 'ol', 'number-item');
+                        } else if (lines[0].match(/^[-•]/)) {
+                            formattedSection = formatList(lines, 'ul', 'bullet-item');
+                        } else if (lines[0].includes(':')) {
+                            formattedSection = formatTitledSection(lines);
+                        } else {
+                            formattedSection = formatParagraph(lines);
+                        }
+    
+                        formattedContent += formattedSection;
                     }
-
-                    formattedContent += formattedSection;
-                }
-            });
-
-            formattedContent += '</div>';
-            return formattedContent;
-        }
-
-        function formatNumberedList(lines) {
-            let html = '<div class="section"><ol class="number-list">';
-            lines.forEach(line => {
-                let content = line.replace(/^\d+\.\s*/, '').trim();
-                if (content) {
-                    html += `<li class="number-item">${formatInlineContent(content)}</li>`;
-                }
-            });
-            html += '</ol></div>';
-            return html;
-        }
-
-        function formatBulletList(lines) {
-            let html = '<div class="section"><ul class="bullet-list">';
-            lines.forEach(line => {
-                let content = line.replace(/^[-•]\s*/, '').trim();
-                if (content) {
-                    html += `<li class="bullet-item">${formatInlineContent(content)}</li>`;
-                }
-            });
-            html += '</ul></div>';
-            return html;
-        }
-
-        function formatTitledSection(lines) {
-            let [title, ...content] = lines[0].split(':');
-            let remainingLines = [...content.join(':'), ...lines.slice(1)].join(' ').trim();
-            
-            return `
-                <div class="section">
-                    <div class="section-title">${title.trim()}</div>
-                    <div>${formatInlineContent(remainingLines)}</div>
-                </div>
-            `;
-        }
-
-        function formatParagraph(lines) {
-            return `
-                <div class="section">
-                    ${formatInlineContent(lines.join(' ').trim())}
-                </div>
-            `;
-        }
-
-        function formatInlineContent(text) {
-            text = text.replace(/€\d+(?:\.\d{2})?/g, match => `<span class="highlight">${match}</span>`);
-            text = text.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
-            text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
-            return text;
-        }
-
-        // Message handling functions
-        function appendMessage(sender, message, source) {
-            if (sender === 'bot') {
-                message = formatBotMessage(message);
+                });
+                formattedContent += '</div>';
+                return formattedContent;
             }
-            let sourceElement = source ? `<div class="source">Generated by AI</div>` : '';
-            let messageElement = `<div class="message ${sender}">${message}${sourceElement}</div>`;
-            
-            $('.messages-container').append(messageElement);
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            const messagesDiv = $('.chat-messages');
-            messagesDiv.scrollTop(messagesDiv[0].scrollHeight);
-        }
-
-        function showLoading() {
-            $('.loading-dots').show();
-            scrollToBottom();
-        }
-
-        function hideLoading() {
-            $('.loading-dots').hide();
-        }
-
-        function sendInitialGreeting() {
-            appendMessage('bot', "Hola, soy María de SanaExpert. 🌿 ¿Cómo puedo ayudarte hoy?");
-        }
-
-        // Message sending function
-        function sendMessage() {
-            let message = $('#user-input').val().trim();
-            if (message === '') return;
-
-            $('#user-input, #send-button').prop('disabled', true);
-            appendMessage('user', message);
-            $('#user-input').val('');
-            showLoading();
-
-            $.ajax({
-                url: '/chat', // Update this URL to your chat endpoint
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ user_id: userId, message: message }),
-                success: function(data) {
-                    hideLoading();
-                    if (data.response) {
-                        appendMessage('bot', data.response, true);
+    
+            function formatList(lines, tag, className) {
+                return `<div class="section"><${tag} class="${tag}-list">` +
+                    lines.map(line => `<li class="${className}">${formatInlineContent(line.replace(/^\d+\.\s*|[-•]\s*/, ''))}</li>`).join('') +
+                    `</${tag}></div>`;
+            }
+    
+            function formatTitledSection(lines) {
+                let [title, ...content] = lines[0].split(':');
+                let remainingLines = [...content.join(':'), ...lines.slice(1)].join(' ').trim();
+                return `<div class="section"><div class="section-title">${title.trim()}</div><div>${formatInlineContent(remainingLines)}</div></div>`;
+            }
+    
+            function formatParagraph(lines) {
+                return `<div class="section">${formatInlineContent(lines.join(' ').trim())}</div>`;
+            }
+    
+            function formatInlineContent(text) {
+                return text
+                    .replace(/€\d+(?:\.\d{2})?/g, match => `<span class="highlight">${match}</span>`)
+                    .replace(/\*(.*?)\*/g, '<strong>$1</strong>')
+                    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+            }
+    
+            // Append and Scroll Messages
+            function appendMessage(sender, message, source = false) {
+                let messageElement = document.createElement('div');
+                messageElement.className = `message ${sender}`;
+                messageElement.innerHTML = sender === 'bot' ? formatBotMessage(message) : message;
+                if (source) {
+                    let sourceElement = document.createElement('div');
+                    sourceElement.className = 'source';
+                    sourceElement.textContent = 'Generated by AI';
+                    messageElement.appendChild(sourceElement);
+                }
+                $messagesContainer.append(messageElement);
+                scrollToBottom();
+            }
+    
+            function scrollToBottom() {
+                $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
+            }
+    
+            function showLoading() { $loadingDots.show(); scrollToBottom(); }
+            function hideLoading() { $loadingDots.hide(); }
+    
+            function sendInitialGreeting() {
+                appendMessage('bot', "Hola, soy María de SanaExpert. 🌿 ¿Cómo puedo ayudarte hoy?");
+            }
+    
+            // Send Message
+            function sendMessage() {
+                let message = $userInput.val().trim();
+                if (!message) return;
+    
+                $userInput.add($sendButton).prop('disabled', true);
+                appendMessage('user', message);
+                $userInput.val('');
+                showLoading();
+    
+                $.ajax({
+                    url: 'https://sanaexpertai.azurewebsites.net/chat',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ user_id: localStorage.getItem('sanaexpert_user_id'), message }),
+                    success: function(data) {
+                        hideLoading();
+                        if (data.response) appendMessage('bot', data.response, true);
+                    },
+                    error: function() {
+                        hideLoading();
+                        appendMessage('bot', 'Sorry, something went wrong. Please try again.');
+                    },
+                    complete: function() {
+                        $userInput.add($sendButton).prop('disabled', false).focus();
                     }
-                },
-                error: function() {
-                    hideLoading();
-                    appendMessage('bot', 'Sorry, something went wrong. Please try again.');
-                },
-                complete: function() {
-                    $('#user-input, #send-button').prop('disabled', false);
-                    $('#user-input').focus();
+                });
+            }
+    
+            // Event Listeners
+            $sendButton.on('click', sendMessage);
+            $userInput.on('keypress', function(e) {
+                if (e.which === 13 && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
                 }
             });
         }
-
-        // Event listeners
-        $('#send-button').click(sendMessage);
-
-        $('#user-input').keypress(function(e) {
-            if (e.which === 13 && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-    }
-
-    // Start initialization
-    waitForJQuery(initChatWidget);
-})();
-</script>
+    
+        window.addEventListener('load', initChatWidget);
+    });
+    </script> 
