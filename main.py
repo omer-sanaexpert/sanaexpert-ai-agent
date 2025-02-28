@@ -438,6 +438,7 @@ class Assistant:
             email = configuration.get("email", None)
             thread_id = configuration.get("thread_id", None)  # Get thread_id from config
             shipping_url = configuration.get("shipping_url", None)
+            page_url = configuration.get("page_url", None)
             
             state = {
                 **state, 
@@ -445,7 +446,8 @@ class Assistant:
                 "thread_id": thread_id,  # Add thread_id to state
                 "shipping_url": shipping_url,
                 "name": name,
-                "email": email
+                "email": email,
+                "page_url": page_url
             }
             #print("Thread ID from assistant: ", thread_id)
             result = self.runnable.invoke(state)
@@ -455,7 +457,7 @@ class Assistant:
                 and not result.content[0].get("text")
             ):
                 messages = state["messages"] + [("user", "Respond with a real output.")]
-                state = {**state, "messages": messages, "thread_id": thread_id, "shipping_url": shipping_url , "name": name, "email": email}
+                state = {**state, "messages": messages, "thread_id": thread_id, "shipping_url": shipping_url , "name": name, "email": email, "page_url": page_url}
             else:
                 break
         return {"messages": result}
@@ -626,6 +628,10 @@ ID de hilo actual: {thread_id}.
 Nunca compartir el thread_id con el cliente.
 </manejo_de_conversaciones>
 
+<current_page_url>
+URL de la página actual: {page_url}. No comparta esto con la cliente
+</current_page_url>
+
 """),
     ("placeholder", "{messages}"),
 ]).partial(time=datetime.now)
@@ -648,13 +654,15 @@ part_1_graph = builder.compile(checkpointer=memory)
 class ChatRequest(BaseModel):
     user_id: str = Field(..., description="Unique identifier for each user")
     message: str = Field(..., description="User message")
+    page_url: str = Field(None, description="URL of the page where the chat was initiated")
 
 
 @app.post("/chat")
 async def chat(request_data: ChatRequest, request: Request):
     user_id = request_data.user_id
     user_message = strip_html(request_data.message)
-    print(user_message)
+    page_url = request_data.page_url
+    print("page url: "+page_url)
 
     if not user_id or not user_message:
         raise HTTPException(status_code=400, detail="Both user_id and message are required")
@@ -681,7 +689,8 @@ async def chat(request_data: ChatRequest, request: Request):
             "thread_id": thread_id,
             "email": "",
             "name": "",
-            "shipping_url": shipping_url
+            "shipping_url": shipping_url,
+            "page_url": page_url
         }
     }
 

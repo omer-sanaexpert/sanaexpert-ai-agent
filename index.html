@@ -23,8 +23,8 @@
             </div>
         </div>
         <div class="chat-input">
-            <input type="text" id="user-input" placeholder="Type your message...">
-            <button id="emoji-button" class="emoji-button">😊</button>
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje...">
+            <button id="emoji-button" class="emoji-button">☺</button>
             <div id="emoji-picker" class="emoji-picker">
                 <div class="emoji-container">
                     <span class="emoji">😊</span>
@@ -45,7 +45,7 @@
                     <span class="emoji">⭐</span>
                 </div>
             </div>
-            <button id="send-button">Send</button>
+            <button id="send-button">➤</button>
         </div>
     </div>
 </div>
@@ -92,6 +92,7 @@
 
 #sanaexpert-chat-widget * {
     box-sizing: border-box;
+    font-size: medium;
 }
 
 /* Chat Button */
@@ -144,7 +145,7 @@
 
 /* Chat Header */
 .chat-header {
-    background: linear-gradient(135deg, #0d8500 0%, #106800 100%);
+    background: linear-gradient(135deg, rgb(140, 182, 62) 0%, #106800 100%);
     color: #fff;
     padding: 15px;
     border-radius: 16px 16px 0 0;
@@ -165,7 +166,7 @@
     background: none;
     border: none;
     color: #fff;
-    font-size: 24px;
+    font-size: x-large !important;
     cursor: pointer;
     padding: 0 5px;
     transition: transform 0.2s ease;
@@ -277,7 +278,7 @@
     border: 1px solid #ddd;
     border-radius: 24px;
     outline: none;
-    font-size: 14px;
+    font-size: small !important;
     transition: all 0.3s ease;
     height: 40px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -295,10 +296,11 @@
 /* Emoji Button and Picker */
 .emoji-button {
     background: none;
+    color: #0d8500;
     border: none;
-    font-size: 20px;
+    font-size: x-large !important;
     cursor: pointer;
-    margin: 0 8px;
+    margin: 0 4px;
     padding: 5px;
     border-radius: 50%;
     transition: transform 0.2s;
@@ -349,12 +351,11 @@
 
 .chat-input button#send-button {
     padding: 10px 20px;
-    background: linear-gradient(135deg, #0d8500 0%, #106800 100%);
+    background: linear-gradient(135deg, rgb(140, 182, 62) 0%, #106800 100%);
     color: #fff;
     border: none;
     border-radius: 24px;
     cursor: pointer;
-    margin-left: 10px;
     transition: all 0.3s ease;
     height: 40px;
     white-space: nowrap;
@@ -382,7 +383,6 @@
 .section {
     margin: 10px 0;
     padding: 8px 12px;
-    background: #f8f9f9;
     border-radius: 8px;
 }
 
@@ -525,9 +525,7 @@
 
 /* Added styles for different screen sizes */
 @media (min-height: 800px) {
-    .chat-container {
-        height: calc(85vh - 120px);
-    }
+    
 }
 
 @media (max-height: 600px) {
@@ -756,10 +754,13 @@ document.addEventListener('DOMContentLoaded', function() {
             appendMessage('user', message);
             if (userInput) userInput.value = '';
             showLoading();
+            
+            // Get current page URL
+            const currentUrl = window.location.href;
 
             // Create AJAX request without jQuery
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'https://sanaexpertai.azurewebsites.net/chat');
+            xhr.open('POST', '/chat');
             xhr.setRequestHeader('Content-Type', 'application/json');
             xhr.onload = function() {
                 hideLoading();
@@ -784,7 +785,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             try {
                 const userId = localStorage.getItem('sanaexpert_user_id');
-                xhr.send(JSON.stringify({ user_id: userId, message }));
+                xhr.send(JSON.stringify({ 
+                    user_id: userId, 
+                    message: message,
+                    page_url: currentUrl  // Include the current page URL
+                }));
             } catch (e) {
                 console.error('Error sending message:', e);
                 hideLoading();
