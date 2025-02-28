@@ -76,58 +76,13 @@ class ZendeskTicketManager:
         """
         temp_email = f"anonymous_{uuid.uuid4().hex}@temporary.com"
         temp_name = "Anonymous User"
-        
-        # Create metadata dictionary
-        # metadata = {
-        #     "custom": {
-        #         "request": {
-        #             "method": request_info.method,
-        #             "url": request_info.url,
-        #             "base_url": request_info.base_url,
-        #             "path": request_info.path,
-        #             "client_host": request_info.client_host
-        #         }
-        #     }
-        # }
-        
-        # Add browser info if available
-        # if request_info.browser_info:
-        #     metadata["custom"]["browser"] = {
-        #         "family": request_info.browser_info.browser_family,
-        #         "version": request_info.browser_info.browser_version,
-        #         "os_family": request_info.browser_info.os_family,
-        #         "os_version": request_info.browser_info.os_version,
-        #         "device_family": request_info.browser_info.device_family,
-        #         "device_brand": request_info.browser_info.device_brand,
-        #         "device_model": request_info.browser_info.device_model,
-        #         "is_mobile": request_info.browser_info.is_mobile,
-        #         "is_tablet": request_info.browser_info.is_tablet,
-        #         "is_desktop": request_info.browser_info.is_desktop,
-        #         "is_bot": request_info.browser_info.is_bot,
-        #         "user_agent": request_info.browser_info.raw_user_agent
-        #     }
-        
-        # Add location info if available
-        # if request_info.location_info:
-        #     metadata["custom"]["location"] = {
-        #         "country_code": request_info.location_info.country_code,
-        #         "country_name": request_info.location_info.country_name,
-        #         "city": request_info.location_info.city,
-        #         "postal_code": request_info.location_info.postal_code,
-        #         "latitude": request_info.location_info.latitude,
-        #         "longitude": request_info.location_info.longitude,
-        #         "timezone": request_info.location_info.timezone,
-        #         "continent": request_info.location_info.continent,
-        #         "subdivision": request_info.location_info.subdivision,
-        #         "accuracy_radius": request_info.location_info.accuracy_radius
-        #     }
 
         ticket_data = {
             "request": {
                 "subject": "Support Request from Shopify ES",
                 "comment": {
-                    "body": "SanaExpert - Support Team.",
-                    "author_id": "31549253490321",
+                    "body": "Hola, soy María de SanaExpert. 🌿 ¿Cómo puedo ayudarte hoy?",
+                    "author_id": "32601040249617",
                     "public": False,
                 },
                 "requester": {
@@ -167,8 +122,64 @@ class ZendeskTicketManager:
         except requests.exceptions.RequestException as e:
             print(f"Error creating ticket: {str(e)}")
             return None, None
+        
+    def add_tag_to_ticket(self, ticket_id, tag):
+        """
+        Add a tag to a ticket in Zendesk.
+        
+        Args:
+            ticket_id: The ID of the ticket to update
+            tag: The tag to add to the ticket
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # First, get the current ticket data
+            response = requests.get(
+                f"{self.base_url}/api/v2/tickets/{ticket_id}.json",
+                headers=self.headers,
+                auth=self.auth,
+            )
+            if response.status_code != 200:
+                print(f"Failed to get ticket data: {response.status_code} {response.text}")
+                return False
+                
+            ticket_data = response.json()['ticket']
+            
+            # Get current tags or initialize empty list
+            current_tags = ticket_data.get('tags', [])
+            
+            # Add the new tag if it's not already present
+            if tag not in current_tags:
+                current_tags.append(tag)
+            
+            # Update the ticket with the new tags
+            update_data = {
+                "ticket": {
+                    "tags": current_tags
+                }
+            }
+            
+            update_response = requests.put(
+                f"{self.base_url}/api/v2/tickets/{ticket_id}.json",
+                json=update_data,
+                headers=self.headers,
+                auth=self.auth,
+            )
+            
+            if update_response.status_code == 200:
+                print(f"Tag '{tag}' added to ticket {ticket_id}")
+                return True
+            else:
+                print(f"Failed to add tag: {update_response.status_code} {update_response.text}")
+                return False
+                
+        except Exception as e:
+            print(f"Error adding tag to ticket: {str(e)}")
+            return False
 
-    def update_ticket_status(self, ticket_id: int, new_status: str = "open") -> bool:
+    def update_ticket_status(self, ticket_id: int, new_status: str = "open", tag: str ="") -> bool:
         """
         Update the status of a specified ticket.
         
@@ -181,7 +192,8 @@ class ZendeskTicketManager:
         """
         ticket_data = {
             "ticket": {
-                "status": new_status
+                "status": new_status,
+                "tags": ["ticket_by_ai",tag]
             }
         }
         #assign to omer jadoon, clara
@@ -235,7 +247,7 @@ class ZendeskTicketManager:
             print(f"Error assigning ticket: {str(e)}")
             return False
 
-    def update_user_details(self, requester_id: int,ticket_id:int, new_email: str, new_name: str) -> bool:
+    def update_user_details(self, requester_id: int,ticket_id:int, new_email: str, new_name: str, summary:str) -> bool:
         """
         Update user details and handle existing user cases.
         
@@ -257,7 +269,7 @@ class ZendeskTicketManager:
             search_response.raise_for_status()
             
             existing_users = search_response.json().get("users", [])
-            
+            print("tags",summary)
             if existing_users:
                 existing_user = existing_users[0]
                 print(f"User found: {existing_user['name']} ({existing_user['email']})")
@@ -267,7 +279,8 @@ class ZendeskTicketManager:
                 ### update the requester_id to existing ticket
                 
                 self.assign_ticket(ticket_id, existing_user['id'])
-                self.update_ticket_status(ticket_id, "open")
+                #self.add_tag_to_ticket(ticket_id, summary)
+                self.update_ticket_status(ticket_id, "open",summary)
                 return True
             
             # Update user details if no existing user found
@@ -284,8 +297,10 @@ class ZendeskTicketManager:
                 headers=self.headers,
                 json=user_data
             )
+            print("update response",update_response.json())
             update_response.raise_for_status()
-            self.update_ticket_status(ticket_id, "open")
+            self.update_ticket_status(ticket_id, "open",summary)
+            #self.add_tag_to_ticket(ticket_id, summary)
             return True
             
         except requests.exceptions.RequestException as e:
@@ -299,7 +314,7 @@ class ZendeskTicketManager:
         Args:
             ticket_id (int): The ID of the ticket to update.
             comment (str): The comment text.
-            as_bot (bool): Whether the comment should be posted as a bot (True) or as the customer (False).
+            requester_id (str): ID of the author making the comment.
         
         Returns:
             bool: Success status of the comment addition.
@@ -308,16 +323,16 @@ class ZendeskTicketManager:
             "ticket": {
                 "comment": {
                     "body": comment,
-                    "public": False,
-                }
-            },
-            "tags": ["ticket_by_ai"]
+                    "public": True,  # Changed to True for proper sequencing
+                    "author_id": requester_id
+                },
+            }
         }
         
-        if requester_id != "32601040249617":
-            comment_data["ticket"]["comment"]["author_id"] = requester_id
-        else:
-            comment_data["ticket"]["comment"]["author_id"] = "32601040249617"  # Zendesk automatically assigns the agent/bot
+        # Only override author_id if it's the bot ID
+        if requester_id == "32601040249617":
+            # This ensures bot comments are properly identified
+            pass  # Author ID is already set above
         
         try:
             response = requests.put(
@@ -334,42 +349,3 @@ class ZendeskTicketManager:
             print(f"Error adding public comment: {str(e)}")
             return False
 
-
-
-
-def main():
-    """Main workflow for ticket creation and user management."""
-    try:
-        # Initialize the ticket manager
-        manager = ZendeskTicketManager()
-        
-        # Step 1: Create anonymous ticket
-        requester_id, ticket_id = manager.create_anonymous_ticket(
-            "Initial support request"
-        )
-        
-        if not requester_id:
-            print("Failed to create ticket. Exiting.")
-            return
-        
-        # Step 2: Get user details
-        print("\nPlease provide your contact information:")
-        new_email = input("Email address: ").strip()
-        new_name = input("Full name: ").strip()
-        
-        # Validate input
-        if not all([new_email, new_name]):
-            print("Email and name are required. Exiting.")
-            return
-        
-        # Step 3: Update user details
-        if manager.update_user_details(requester_id,ticket_id, new_email, new_name):
-            print(f"Successfully processed ticket {ticket_id} for {new_email}")
-        else:
-            print("Failed to update user details")
-            
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-
-if __name__ == "__main__":
-    main()

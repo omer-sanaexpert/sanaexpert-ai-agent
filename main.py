@@ -343,7 +343,6 @@ def get_product_information() -> Dict[str, Any]:
     api_cache["get_product_information"] = {"data": response.json(), "timestamp": datetime.now()}
     return response.json()
 
-    
 
 @tool
 def escalate_to_human(name: str, email: str, thread_id: str) -> str:
@@ -363,11 +362,54 @@ def escalate_to_human(name: str, email: str, thread_id: str) -> str:
     print("thread id "+thread_id)
     requester_id = requests_and_tickets[thread_id]["requester_id"]
     ticket_id = requests_and_tickets[thread_id]["ticket_id"]
-    #TODO: Create a ticket in Zendesk
-    if manager.update_user_details(requester_id,ticket_id, email, name):
-        return f"Escalated ticket created for {name} ({email})"
-    else:
-        return "Something went wrong. Please contact support@sanaexpert.com"
+    
+    # Find the user_id associated with this thread_id
+    user_id = None
+    for uid, data in user_conversations.items():
+        if data.get("thread_id") == thread_id:
+            user_id = uid
+            break
+    
+    # Get conversation history
+    conversation_history = ""
+    if user_id and user_id in user_conversations:
+        conversation_history = "\n".join(user_conversations[user_id].get("history", []))
+    
+    # Use LLM to generate a summary of the conversation
+    summary_prompt = f"""
+    Analyze the entire conversation and determine the most appropriate single tag that best represents the main topic or intent. Choose from the following predefined categories: refund, cancel_order, general_information, return_order, subscription, or others. Provide only the tag as the response, without any explanation.
+    
+    
+    Conversation:
+    {conversation_history} , Tag: 
+    """
+    
+    try:
+        # Using the already initialized Anthropic client
+        summary_response = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=500,
+            messages=[{"role": "user", "content": summary_prompt}]
+        )
+        
+        # Extract the generated summary
+        summary = summary_response.content[0].text
+
+        print("Summary from escalate to human: ", summary)
+        
+        # Update user details in Zendesk
+        if manager.update_user_details(requester_id, ticket_id, email, name , summary):
+            # Add the LLM-generated summary as a public comment
+            return f"Escalated ticket created for {name} ({email})"
+    except Exception as e:
+        print(f"Error generating summary: {str(e)}")
+        # Fallback to a simple message if LLM fails
+        if manager.update_user_details(requester_id, ticket_id, email, name):
+            fallback_message = f"Ticket escalated for {name} ({email}). Please review the conversation history."
+            if manager.add_public_comment(ticket_id, fallback_message, requester_id):
+                return f"Escalated ticket created for {name} ({email})"
+    
+    return "Something went wrong. Please contact support@sanaexpert.com"    
 
 @tool
 def query_knowledgebase_sanaexpert(q: str) -> str:
@@ -587,7 +629,7 @@ Para rastrear envíos: Usar la siguiente URL: {shipping_url}
 Para solicitudes de devolución/reembolso o cancelación/modificación de pedidos:
 
 Recopilar el nombre del cliente (obligatorio) y el correo electrónico (obligatorio)
-Recopilar cualquier mensaje o detalle adicional del cliente si es necesario (opcional)
+Pregunte el motivo en caso de devolución o reembolso (obligatorio)
 Escalar a soporte humano de inmediato
 </protocolo_reembolso_cancelación_devolución_modificación>
 <protocolo_consulta_vouchers>
