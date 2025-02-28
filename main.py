@@ -472,7 +472,7 @@ llm = ChatAnthropic(model="claude-3-5-sonnet-20241022", temperature=1)
 question_rewriter = re_write_prompt | llm | StrOutputParser()
 
 # Web search tool
-web_search_tool = TavilySearchResults(k=3, search_engine="google")
+web_search_tool = TavilySearchResults(k=1, search_engine="google")
 
 @tool
 def web_search(query: str) -> str:
@@ -643,133 +643,12 @@ builder.add_edge("tools", "assistant")
 memory = MemorySaver()
 part_1_graph = builder.compile(checkpointer=memory)
 
-class BrowserInfo(BaseModel):
-    browser_family: str
-    browser_version: Optional[str]
-    os_family: str
-    os_version: Optional[str]
-    device_family: str
-    device_brand: Optional[str]
-    device_model: Optional[str]
-    is_mobile: bool
-    is_tablet: bool
-    is_desktop: bool
-    is_bot: bool
-    raw_user_agent: str
 
-class LocationInfo(BaseModel):
-    country_code: Optional[str]
-    country_name: Optional[str]
-    city: Optional[str]
-    postal_code: Optional[str]
-    latitude: Optional[float]
-    longitude: Optional[float]
-    timezone: Optional[str]
-    continent: Optional[str]
-    subdivision: Optional[str]
-    accuracy_radius: Optional[int]
-
-class RequestInfo(BaseModel):
-    # Previous request fields...
-    method: str
-    url: str
-    base_url: str
-    path: str
-    headers: Dict[str, str]
-    client_host: Optional[str]
-    
-    # New fields for browser and location
-    browser_info: Optional[BrowserInfo]
-    location_info: Optional[LocationInfo]
 
 class ChatRequest(BaseModel):
     user_id: str = Field(..., description="Unique identifier for each user")
     message: str = Field(..., description="User message")
-    request_info: Optional[RequestInfo] = None
 
-def parse_browser_info(user_agent_string: str) -> BrowserInfo:
-    """Parse user agent string to extract detailed browser information"""
-    if not user_agent_string:
-        return None
-    
-    # Parse the user agent string
-    user_agent = parse(user_agent_string)
-    
-    return BrowserInfo(
-        browser_family=user_agent.browser.family,
-        browser_version=str(user_agent.browser.version_string),
-        os_family=user_agent.os.family,
-        os_version=str(user_agent.os.version_string),
-        device_family=user_agent.device.family,
-        device_brand=user_agent.device.brand,
-        device_model=user_agent.device.model,
-        is_mobile=user_agent.is_mobile,
-        is_tablet=user_agent.is_tablet,
-        is_desktop=user_agent.is_pc,
-        is_bot=user_agent.is_bot,
-        raw_user_agent=user_agent_string
-    )
-
-def get_location_info(ip_address: str) -> LocationInfo:
-    """Get location information from IP address using MaxMind GeoIP2 database"""
-    try:
-        # Initialize the GeoIP2 reader with the MaxMind database
-        # You need to download the GeoIP2 database from MaxMind and specify the path
-        with geoip2.database.Reader('GeoLite2-City.mmdb') as reader:
-            response = reader.city(ip_address)
-            
-            return LocationInfo(
-                country_code=response.country.iso_code,
-                country_name=response.country.name,
-                city=response.city.name,
-                postal_code=response.postal.code,
-                latitude=response.location.latitude,
-                longitude=response.location.longitude,
-                timezone=response.location.time_zone,
-                continent=response.continent.name,
-                subdivision=response.subdivisions.most_specific.name if response.subdivisions else None,
-                accuracy_radius=response.location.accuracy_radius
-            )
-    except (AddressNotFoundError, FileNotFoundError):
-        return None
-
-async def extract_request_info(request: Request) -> RequestInfo:
-    """Extract all available information from the request object"""
-    # Get headers and other basic info
-    headers_dict = dict(request.headers)
-    client = request.client
-    client_host = client.host if client else None
-    
-    # Parse browser information
-    user_agent_string = headers_dict.get('user-agent')
-    browser_info = parse_browser_info(user_agent_string) if user_agent_string else None
-    
-    # Get location information
-    location_info = get_location_info(client_host) if client_host else None
-    
-    return RequestInfo(
-        method=request.method,
-        url=str(request.url),
-        base_url=str(request.base_url),
-        path=request.url.path,
-        headers=headers_dict,
-        client_host=client_host,
-        browser_info=browser_info,
-        location_info=location_info
-    )
-
-html_prompt_template = PromptTemplate(
-        input_variables=["text"],
-        template="""
-        Convert the following text into a valid HTML with basic CSS. brand color is #0d8500 , link target new tab. use buttons for links.
-        
-        Text: "{text}"
-        
-        Response: only return valid html and css code .
-        """
-    )
-    
-    
 
 @app.post("/chat")
 async def chat(request_data: ChatRequest, request: Request):
@@ -837,13 +716,6 @@ async def chat(request_data: ChatRequest, request: Request):
                     elif isinstance(content, str):
                         last_assistant_response = content
     
-    #output_tokens = count_tokens(last_assistant_response)
-
-    # chain = LLMChain(llm=llm, prompt=html_prompt_template)
-    # last_assistant_response = chain.run(text=last_assistant_response)
-
-    #print("Input tokens: ", input_tokens)
-    #print("Output tokens: ", output_tokens)
 
     requester_id = requests_and_tickets[thread_id]["requester_id"]
     ticket_id = requests_and_tickets[thread_id]["ticket_id"]
@@ -851,10 +723,11 @@ async def chat(request_data: ChatRequest, request: Request):
         print("Failed to add public comment to ticket")
     else:
         print("Added public comment to ticket")
-    if not manager.add_public_comment(ticket_id, strip_html(last_assistant_response), "32601040249617"):
-        print("Failed to add public comment by agent to ticket")
-    else:
-        print("Added public comment by agent to ticket")
+        if not manager.add_public_comment(ticket_id, strip_html(last_assistant_response), "32601040249617"):
+            print("Failed to add public comment by agent to ticket")
+        else:
+            print("Added public comment by agent to ticket")
+    
 
     return {"response": last_assistant_response}
 
