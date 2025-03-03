@@ -55,6 +55,7 @@ from html import unescape
 from langchain_core.globals import set_llm_cache
 from langchain_core.caches import InMemoryCache
 from fastapi.middleware.cors import CORSMiddleware
+import time
 
 set_llm_cache(InMemoryCache())
 
@@ -377,7 +378,7 @@ def escalate_to_human(name: str, email: str, thread_id: str) -> str:
     
     # Use LLM to generate a summary of the conversation
     summary_prompt = f"""
-    Analyze the entire conversation and determine the most appropriate single tag that best represents the main topic or intent. Choose from the following predefined categories: refund, cancel_order, general_information, return_order, subscription, or others. Provide only the tag as the response, without any explanation.
+    Analyze the entire conversation and determine the most appropriate single tag that best represents the main topic or intent. Choose from the following predefined categories: refund, cancel_order, general_information, return_order, subscription, discount or others. Provide only the tag as the response, without any explanation.
     
     
     Conversation:
@@ -705,25 +706,37 @@ async def chat(request_data: ChatRequest, request: Request):
     user_message = strip_html(request_data.message)
     page_url = request_data.page_url
     print("page url: "+page_url)
-
+    
     if not user_id or not user_message:
         raise HTTPException(status_code=400, detail="Both user_id and message are required")
-
+    
     if user_id not in user_conversations:
         user_conversations[user_id] = {
             "thread_id": str(uuid.uuid4()),
             "history": []
         }
+    
+    # the problem could be that a user couldnt be able to create multiple tickets.
+    thread_id = user_conversations[user_id]["thread_id"]
+    print("Thread ID from chat: ", thread_id)
+    
+    # Check if this thread already has a ticket
+    if thread_id not in requests_and_tickets:
         requester_id, ticket_id = manager.create_anonymous_ticket(user_message)
-        requests_and_tickets[user_conversations[user_id]["thread_id"]] = {
+        requests_and_tickets[thread_id] = {
             "requester_id": requester_id,
             "ticket_id": ticket_id
         }
-
-    # the problem could be that a user couldnt be able to create multiple tickets.
-
-    thread_id = user_conversations[user_id]["thread_id"]
-    print("Thread ID from chat: ", thread_id)
+    else:
+        requester_id = requests_and_tickets[thread_id]["requester_id"]
+        ticket_id = requests_and_tickets[thread_id]["ticket_id"]
+    
+    # First, add the user message to the ticket
+    if not manager.add_public_comment(ticket_id, user_message, requester_id):
+        print("Failed to add public comment to ticket")
+    else:
+        print("Added public comment to ticket")
+    
     config = {
         "configurable": {
             "order_id": "",
@@ -735,27 +748,25 @@ async def chat(request_data: ChatRequest, request: Request):
             "page_url": page_url
         }
     }
-
     
     user_conversations[user_id]["history"].append(f"You: {user_message}")
-    #input_tokens = count_tokens(user_message)
     
     # Initialize a set to track printed events
     printed_events = set()
-
+    
     try:
         events = part_1_graph.stream(
             {"messages": [("user", (user_message))]}, config, stream_mode="values"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch AI response: {str(e)}")
-
+    
     last_assistant_response = ""
     raw_events = list(events)
+    
     for event in raw_events:
         # Print each event
         _print_event(event, printed_events)
-        
         if "messages" in event:
             for message in event["messages"]:
                 if hasattr(message, "content") and "AIMessage" in str(type(message)):
@@ -767,19 +778,13 @@ async def chat(request_data: ChatRequest, request: Request):
                     elif isinstance(content, str):
                         last_assistant_response = content
     
-
-    requester_id = requests_and_tickets[thread_id]["requester_id"]
-    ticket_id = requests_and_tickets[thread_id]["ticket_id"]
-    if not manager.add_public_comment(ticket_id, (user_message), requester_id):
-        print("Failed to add public comment to ticket")
-    else:
-        print("Added public comment to ticket")
+    # Then add the assistant response after getting it
+    if last_assistant_response:
         if not manager.add_public_comment(ticket_id, strip_html(last_assistant_response), "32601040249617"):
             print("Failed to add public comment by agent to ticket")
         else:
             print("Added public comment by agent to ticket")
     
-
     return {"response": last_assistant_response}
 
 

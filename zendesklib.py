@@ -62,6 +62,53 @@ class ZendeskTicketManager:
         self.auth = (f"{self.admin_email}/token", self.api_token)
         self.headers = {"Content-Type": "application/json"}
         self.current_ticket_id = None
+    
+    def add_multiple_comments(self, ticket_id: int, user_message: str, assistant_message: str, requester_id: str, assistant_id: str = "32601040249617") -> bool:
+        """
+        Add both user and assistant messages to a Zendesk ticket in a single API call.
+
+        Args:
+            ticket_id (int): The ID of the Zendesk ticket.
+            user_message (str): The message from the user.
+            assistant_message (str): The response from the assistant.
+            requester_id (str): The user’s Zendesk requester ID.
+            assistant_id (str): The Zendesk ID for the assistant (default: "32601040249617").
+
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+        """
+
+        comment_data = {
+            "ticket": {
+                "comment": [
+                    {
+                        "body": user_message,
+                        "public": True,
+                        "author_id": requester_id
+                    },
+                    {
+                        "body": assistant_message,
+                        "public": True,
+                        "author_id": assistant_id
+                    }
+                ]
+            }
+        }
+
+        try:
+            response = requests.put(
+                f"{self.base_url}/api/v2/tickets/{ticket_id}",
+                auth=self.auth,
+                headers=self.headers,
+                json=comment_data
+            )
+            response.raise_for_status()
+            print(f"Successfully added user and assistant messages to ticket {ticket_id}")
+            return True
+        
+        except requests.exceptions.RequestException as e:
+            print(f"Error adding multiple comments: {str(e)}")
+            return False
 
     def create_anonymous_ticket(self, message: str) -> Tuple[Optional[int], Optional[int]]:
         """
