@@ -1,0 +1,30 @@
+name: Deploy FastAPI to Azure VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup SSH Key and Known Hosts
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.AZURE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.AZURE_VM_IP }} >> ~/.ssh/known_hosts
+
+    - name: Deploy FastAPI to Azure VM
+      run: |
+        ssh ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_IP }} << 'EOF'
+        cd /aiagent
+        git pull origin main
+        pip install -r requirements.txt
+        sudo systemctl restart fastapi
+        EOF
