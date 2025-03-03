@@ -23,7 +23,7 @@ jobs:
     - name: Deploy FastAPI to Azure VM
       run: |
         ssh ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_IP }} << 'EOF'
-        cd /aiagent
+        cd /home/azureuser/aiagent
         git pull origin main
         pip install -r requirements.txt
         sudo systemctl restart fastapi
